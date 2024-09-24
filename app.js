@@ -7,7 +7,7 @@ require('./config/mongo');
 
 const app = express();
 
-const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001'];
+const allowedOrigins = process.env.REACT_APP_ALLOWED_ORIGINS ? process.env.REACT_APP_ALLOWED_ORIGINS.split(',') : ['http://localhost:3000', 'http://localhost:3001'];
 
 app.use(cors({
   origin: function (origin, callback) {
