@@ -1,5 +1,8 @@
 const Products = require('../models/product.model');
+const Categorymodel = require('../models/category.model');
 const { uploadImageToS3 } = require('../config/s3');
+const jwt = require('jsonwebtoken');
+const categoryModel = require('../models/category.model');
 
 const get_all_product = async (req, res) => {
     try {
@@ -12,7 +15,18 @@ const get_all_product = async (req, res) => {
 };
 
 const manage_get_all_product = async (req, res) => {
+    const token = req.headers.authorization;
+    let jwtToken;
+
+    if (token) {
+        jwtToken = token.split(' ')[1];
+    } else {
+        console.log("Authorization header is missing.");
+        return res.status(401).json({ message: 'Authorization token is missing.' });
+    }
+
     try {
+        jwt.verify(jwtToken, process.env.MANAGE_SECRET_KEY);
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
@@ -38,10 +52,17 @@ const get_product = async (req, res) => {
         }
         const isInternational = req.session.is_international || false; 
 
+        category = await categoryModel.find({ id:product[0].category_id }).select('name'); 
+        const categoryName = category.length ? category[0].name : null;
+
+
+
         product = product.map(prod => ({
             ...prod.toObject(), 
-            price: isInternational ? prod.usdprice : prod.inrprice
+            price: isInternational ? prod.usdprice : prod.inrprice,
+            category_name : categoryName
         }));
+
         res.status(200).json(product);
     } catch (error) {
         console.error(error);
@@ -49,7 +70,18 @@ const get_product = async (req, res) => {
     }
 };
 const get_product_with_id = async (req, res) => {
+    const token = req.headers.authorization;
+    let jwtToken;
+
+    if (token) {
+        jwtToken = token.split(' ')[1];
+    } else {
+        console.log("Authorization header is missing.");
+        return res.status(401).json({ message: 'Authorization token is missing.' });
+    }
+
     try {
+        jwt.verify(jwtToken, process.env.MANAGE_SECRET_KEY);
         const { id } = req.params;
         let product = await Products.find({ id:id });
         if (!product) {
@@ -93,14 +125,27 @@ const get_alternate_product = async (req, res) => {
 
 
 const add_product = async (req, res) => {
+    const token = req.headers.authorization;
+    let jwtToken;
+
+    if (token) {
+        jwtToken = token.split(' ')[1];
+    } else {
+        console.log("Authorization header is missing.");
+        return res.status(401).json({ message: 'Authorization token is missing.' });
+    }
+
     try {
-        let { id, name, slug, dimension, description, quantity, inrprice, usdprice, category_id, sub_category_id, show_on_website, show_on_homepage } = req.body;
+        jwt.verify(jwtToken, process.env.MANAGE_SECRET_KEY);
+
+        let { id, name, slug, dimension, description, quantity, maxquantity, inrprice, usdprice, category_id, sub_category_id, show_on_website, show_on_homepage } = req.body;
         id = id || ''; 
         name = name || '';
         slug = slug || '';
         dimension = dimension || '';
         description = description || '';
         quantity = quantity || 0; 
+        maxquantity = maxquantity || 0;
         inrprice = inrprice || 0;
         usdprice = usdprice || 0;
         category_id = category_id || '';
@@ -114,6 +159,7 @@ const add_product = async (req, res) => {
                 slug,
                 dimension,
                 quantity,
+                maxquantity,
                 description,
                 inrprice,
                 usdprice,
@@ -136,6 +182,7 @@ const add_product = async (req, res) => {
                 dimension,
                 description,
                 quantity,
+                maxquantity,
                 inrprice,
                 usdprice,
                 category_id,
@@ -158,9 +205,20 @@ const add_product = async (req, res) => {
 };
 
 const add_product_image = async (req, res) => {
+    const token = req.headers.authorization;
+    let jwtToken;
+
+    if (token) {
+        jwtToken = token.split(' ')[1];
+    } else {
+        console.log("Authorization header is missing.");
+        return res.status(401).json({ message: 'Authorization token is missing.' });
+    }
+
     try {
+        jwt.verify(jwtToken, process.env.MANAGE_SECRET_KEY);
         const { product_id } = req.body;
-        const images = req.files; // Using multer to get the uploaded files
+        const images = req.files;
 
         if (!product_id) {
         return res.status(400).json({ message: 'Product ID is required' });
@@ -170,17 +228,14 @@ const add_product_image = async (req, res) => {
         return res.status(400).json({ message: 'No images uploaded' });
         }
 
-        // Process each image
         const imageFields = ['image1', 'image2', 'image3', 'image4', 'image5', 'image6'];
         const imageUrls = {};
 
-        // Iterate over images and their fields
         for (let i = 0; i < images.length; i++) {
         const file = images[i];
         const imageName = `${file.originalname}`;
         
         try {
-            // Upload image to S3
             const result = await uploadImageToS3(file, imageName, 'products');
             
             imageUrls[imageFields[i]] = imageName;
@@ -190,13 +245,12 @@ const add_product_image = async (req, res) => {
             }
         }
 
-        // Update product with image URLs
         const updateData = { updated_date: new Date() };
-        Object.assign(updateData, imageUrls); // Merge imageUrls into updateData
+        Object.assign(updateData, imageUrls);
 
         const updatedProduct = await Products.findOneAndUpdate(
             { id: product_id },
-            { $set: updateData }, // Save the image URLs
+            { $set: updateData },
             { new: true }
         );
 
@@ -212,32 +266,87 @@ const add_product_image = async (req, res) => {
 };
 
 const reduce_quantity = async (req, res) => {
-    const { productId, quantityToReduce } = req.body;
+    const { products } = req.body;
+    const token = req.headers.authorization;
+    let jwtToken;
+
+    if (token) {
+        jwtToken = token.split(' ')[1];
+    } else {
+        console.log("Authorization header is missing.");
+        return res.status(401).json({ message: 'Authorization token is missing.' });
+    }
 
     try {
-        const product = await Product.findOne({ id: productId });
+        jwt.verify(jwtToken, process.env.SECRET_KEY);
 
-        if (!product) {
-            return res.status(404).json({ message: 'Product not found' });
+        const results = [];
+
+        for (const { productId, quantityToReduce } of products) {
+            const product = await Products.findOne({ id: productId });
+
+            if (!product) {
+                results.push({ productId, message: 'Product not found' });
+                continue;
+            }
+
+            if (product.quantity < quantityToReduce) {
+                results.push({ productId, message: 'Insufficient stock' });
+                continue;
+            }
+
+            product.quantity -= quantityToReduce;
+
+            await product.save();
+            results.push({ productId, message: 'Product quantity reduced successfully' });
         }
 
-        // Check if quantity to reduce is valid
-        if (product.quantity < quantityToReduce) {
-            return res.status(400).json({ message: 'Insufficient stock' });
-        }
-
-        // Subtract the quantity
-        product.quantity -= quantityToReduce;
-
-        // Save the updated product
-        await product.save();
-
-        res.status(200).json({ message: 'Product quantity reduced successfully' });
+        res.status(200).json({ results });
     } catch (error) {
         console.error('Error reducing product quantity:', error);
         res.status(500).json({ message: 'Server error' });
     }
 };
+
+const restore_quantity = async (req, res) => {
+    const { products } = req.body;
+    const token = req.headers.authorization;
+    let jwtToken;
+
+    if (token) {
+        jwtToken = token.split(' ')[1];
+    } else {
+        console.log("Authorization header is missing.");
+        return res.status(401).json({ message: 'Authorization token is missing.' });
+    }
+
+    try {
+        jwt.verify(jwtToken, process.env.SECRET_KEY);
+
+        const results = [];
+
+        for (const { productId, quantityToRestore } of products) {
+            const product = await Products.findOne({ id: productId });
+
+            if (!product) {
+                results.push({ productId, message: 'Product not found' });
+                continue;
+            }
+
+            product.quantity += quantityToRestore;
+
+            await product.save();
+            results.push({ productId, message: 'Product quantity restored successfully' });
+        }
+
+        res.status(200).json({ results });
+    } catch (error) {
+        console.error('Error restoring product quantity:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+
   
 
 module.exports = {
@@ -246,7 +355,9 @@ module.exports = {
     manage_get_all_product,
     get_alternate_product,
     add_product,
+    add_product_image,
     get_product_with_id,
     reduce_quantity,
+    restore_quantity
 
 };

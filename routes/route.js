@@ -49,27 +49,30 @@ router.get('/orders', order.get_orders_by_customer_id)
 router.post('/register', customer.register_customer)
 router.post('/verify-otp', customer.verifyOtp)
 router.post('/login', customer.user_login)
+router.post('/save-address', customer.save_address)
 router.post('/addtobag', bag.addtobag)
 router.post('/cartCount', bag.cartCount)
+router.post('/check-quantity', bag.check_product_quantity)
 router.post('/removefrombag', bag.removefrombag)
 router.post('/createOrder', payment.createOrder)
 router.post('/verifyPayment', payment.verifyPayment)
 router.post('/addAdmin', admin.addAdminUser)
 router.post('/reduce-quantity', product.reduce_quantity)    
+router.post('/restore-quantity', product.restore_quantity)    
 router.post('/set-international-session', homepage.set_international_session)
 router.post('/get-international-session', homepage.get_international_session)
 
 router.post('/delete-api', admin.delete_api)
 router.post('/addProduct', product.add_product)
-// router.post('/addProductImages', upload.array('productImages', 6), product.add_product_image); 
+router.post('/addProductImages', upload.array('productImages', 6), product.add_product_image);
 router.post('/addCategory', category.add_category)
 router.post('/addImageCategory', upload.single('categoryImage'), category.add_category_image);
 router.post('/addCustomer', customer.add_customer)
 router.post('/updateCustomer', customer.update_website_customer)
 router.post('/forgot-password', customer.forgotPassword)
 router.post('/reset-password', customer.resetPassword)
+router.post('/contact-us', customer.contact_us)
+router.post('/subscribe', customer.newsletter)
 router.post('/checkAdmin', admin.check_adminuser)
-
-
 
 module.exports = router

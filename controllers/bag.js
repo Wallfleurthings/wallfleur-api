@@ -70,10 +70,14 @@ const addtobag = async (req, res) => {
       const customerId = decodedToken.userId;
   
       const { products } = req.body;
+
+      await Bag.deleteMany({ customer_id: customerId });
   
       if (!products || (Array.isArray(products) && products.length === 0)) {
-        return res.status(400).json({ message: 'Product data is missing in request body.' });
+        return res.status(200).json({ message: 'Product data is missing in request body.' });
       }
+
+      await Bag.deleteMany({ customer_id: customerId });
   
       const productIds = products.map(prod => prod.id);
   
@@ -98,7 +102,6 @@ const addtobag = async (req, res) => {
       res.status(200).json({ message: 'Products added to bag successfully.' });
   
     } catch (err) {
-      console.error("Error adding products to bag:", err);
       if (err.name === 'JsonWebTokenError') {
         res.status(400).json({ message: 'Invalid token. Please provide a valid token.' });
       } else if (err.name === 'TokenExpiredError') {
@@ -182,9 +185,53 @@ const cartCount = async (req, res) => {
     }
 };
 
+const check_product_quantity = async (req, res) => {
+    const { products } = req.body;
+    const token = req.headers.authorization;
+    let jwtToken;
+
+    if (token) {
+        jwtToken = token.split(' ')[1];
+    } else {
+        console.log("Authorization header is missing.");
+        return res.status(401).json({ message: 'Authorization token is missing.' });
+    }
+
+    try {
+        jwt.verify(jwtToken, process.env.SECRET_KEY);
+
+        const results = [];
+        let prop;
+
+        for (const { productId, quantity } of products) {
+            const productdata = await Product.findOne({ id: productId });
+            prop = productdata;
+
+            if (!productdata) {
+                results.push({ productId, message: 'Product not found' });
+                continue;
+            }
+
+            if (productdata.quantity == 2) {
+                results.push({ productId,name:productdata.name, message: 'Out of stock' });
+            }
+
+            if ((productdata.quantity - 2) < quantity) {
+                results.push({ productId,name:productdata.name, message: 'quantity changed' });
+            }
+        }
+        res.status(200).json({ results });
+    } catch (error) {
+        console.error('Error reducing product quantity:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+
 module.exports = {
     check_bag,
     addtobag,
     removefrombag,
+    check_product_quantity,
     cartCount
 };

@@ -1,7 +1,7 @@
 const Category = require('../models/category.model');
 const Products = require('../models/product.model');
 const { uploadImageToS3 } = require('../config/s3');
-
+const jwt = require('jsonwebtoken');
 
 const get_all_category = async (req, res) => {
     try {
@@ -14,7 +14,18 @@ const get_all_category = async (req, res) => {
 };
 
 const manage_get_all_category = async (req, res) => {
+    const token = req.headers.authorization;
+    let jwtToken;
+
+    if (token) {
+        jwtToken = token.split(' ')[1];
+    } else {
+        console.log("Authorization header is missing.");
+        return res.status(401).json({ message: 'Authorization token is missing.' });
+    }
+
     try {
+        jwt.verify(jwtToken, process.env.MANAGE_SECRET_KEY);
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
@@ -31,7 +42,18 @@ const manage_get_all_category = async (req, res) => {
 };
 
 const get_category_id = async (req, res) => {
+    const token = req.headers.authorization;
+    let jwtToken;
+
+    if (token) {
+        jwtToken = token.split(' ')[1];
+    } else {
+        console.log("Authorization header is missing.");
+        return res.status(401).json({ message: 'Authorization token is missing.' });
+    }
+
     try {
+        jwt.verify(jwtToken, process.env.MANAGE_SECRET_KEY);
         const categories = await Category.find({ status: 1,is_deleted: 0 })
             .sort({ addedDate: -1 })
             .select('id name');
@@ -70,9 +92,20 @@ const get_category_product = async (req, res) => {
 };
 
 const get_category_with_id = async (req, res) => {
+    const token = req.headers.authorization;
+    let jwtToken;
+
+    if (token) {
+        jwtToken = token.split(' ')[1];
+    } else {
+        console.log("Authorization header is missing.");
+        return res.status(401).json({ message: 'Authorization token is missing.' });
+    }
+
     try {
+        jwt.verify(jwtToken, process.env.MANAGE_SECRET_KEY);
         const { id } = req.params;
-        const categoryData = await Category.find({ id: id }); // Use a different variable name
+        const categoryData = await Category.find({ id: id });
         if (!categoryData) {
             return res.status(404).json({ message: 'No Category' });
         }
@@ -84,9 +117,20 @@ const get_category_with_id = async (req, res) => {
 };
 
 const add_category = async (req, res) => {
+
+    const token = req.headers.authorization;
+    let jwtToken;
+
+    if (token) {
+        jwtToken = token.split(' ')[1];
+    } else {
+        console.log("Authorization header is missing.");
+        return res.status(401).json({ message: 'Authorization token is missing.' });
+    }
+
     try {
+        jwt.verify(jwtToken, process.env.MANAGE_SECRET_KEY);
         let { id, name, slug, status } = req.body;
-        console.log(req.body,'-------------');
 
         id = id || ''; 
         name = name || '';
@@ -127,7 +171,18 @@ const add_category = async (req, res) => {
 };
 
 const add_category_image = async (req, res) => {
+    const token = req.headers.authorization;
+    let jwtToken;
+
+    if (token) {
+        jwtToken = token.split(' ')[1];
+    } else {
+        console.log("Authorization header is missing.");
+        return res.status(401).json({ message: 'Authorization token is missing.' });
+    }
+
     try {
+        jwt.verify(jwtToken, process.env.MANAGE_SECRET_KEY);
         let { id, image } = req.body;
         const file = req.file;
 

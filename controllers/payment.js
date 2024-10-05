@@ -39,46 +39,49 @@ const createOrder = async (req, res) => {
         const isInternational = req.session.is_international || false; 
         const amountInCents = Math.round(amount * 100);
 
-        // Fetch product prices from the database
         const productIds = products.map(product => product.id);
-        const productDetails = await Product.find({ id: { $in: productIds } }).select(isInternational ? 'usdprice id' : 'inrprice id'); 
+        const productDetails = await Product.find({ id: { $in: productIds } }).select(`id name quantity ${isInternational ? 'usdprice' : 'inrprice'}`); 
 
-        // Create a map for quick lookup of product prices
         const productPriceMap = productDetails.reduce((map, product) => {
             map[product.id.toString()] = isInternational ? product.usdprice : product.inrprice;
             return map;
         }, {});
 
+        const availableQuantities = productDetails.reduce((map, product) => {
+            map[product.id.toString()] = product.quantity;
+            return map;
+        }, {});
+
+        for (const product of products) {
+            const availableQuantity = availableQuantities[product.id];
+            if (availableQuantity < product.quantity) {
+                return res.status(400).json({
+                    message: `Insufficient quantity for product ${product.name}. Available: ${availableQuantity}, Requested: ${product.quantity}`
+                });
+            }
+        }
+
         const deliveryCharge = 500;
 
-        // Calculate the expected amount based on product prices and quantities
         const totalAmountFromProducts = products.reduce((total, product) => {
             const productPrice = productPriceMap[product.id];
             return total + (product.quantity * (productPrice || 0));
         }, 0);
 
-
-
-        // Add delivery charge to the total amount
         const totalAmountWithDelivery = totalAmountFromProducts + deliveryCharge;
 
-        // Convert to cents
         const calculatedAmountInCents = Math.round(totalAmountWithDelivery * 100);
 
-
-        // Compare the received amount with the calculated amount
         if (amountInCents !== calculatedAmountInCents) {
             return res.status(400).json({ message: 'Amount mismatch' });
         }
 
-        // Create order options for Razorpay
         const options = {
             amount: amountInCents,
             currency: isInternational ? 'USD' : 'INR',
             receipt: `receipt_${Date.now()}`
         };
 
-        // Create a new order with Razorpay
         const order = await razorpay.orders.create(options);
         const orderCount = await Order.countDocuments({ customer_id: customerId });
 
@@ -88,12 +91,13 @@ const createOrder = async (req, res) => {
             customer_id: customerId,
             customer_name: userData.name,
             mobile: userData.mobile,
+            dialcode: userData.dialcode,
             address: userData.address,
             city: userData.city,
             state: userData.state,
             country: userData.country,
             postalCode: userData.postalCode,
-            amount: totalAmountFromProducts, // Store amount as a float
+            amount: totalAmountFromProducts,
             currency: order.currency,
             receipt: order.receipt,
             order_id: order.id,

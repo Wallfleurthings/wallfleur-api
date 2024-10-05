@@ -38,7 +38,6 @@ const search = async (req, res) => {
 const set_international_session = async (req, res) => {
     try {
         req.session.is_international = true;
-        console.log('setsession:',req.sessionID);
         res.status(200).json(req.session.is_international );
     } catch (error) {
         console.error('Error unable to set session:', error);
@@ -48,7 +47,6 @@ const set_international_session = async (req, res) => {
 
 const get_international_session = async (req, res) => {
     try {
-        console.log('session:',req.session);
         res.status(200).json(req.session );
     } catch (error) {
         console.error('Error unable to set session:', error);

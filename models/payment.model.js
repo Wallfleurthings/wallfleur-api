@@ -10,7 +10,11 @@ const OrderSchema = new mongoose.Schema({
         required: true,
     },
     mobile: {
-        type: Number,
+        type: String,
+        required: true,
+    },
+    dialcode: {
+        type: String,
         required: true,
     },
     address: {

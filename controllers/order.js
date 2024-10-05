@@ -9,7 +9,19 @@ const { generateOrderStatusEmailTemplate } = require('../utils/emailTemplates/or
 require('dotenv').config();
 
 const manage_get_all_orders = async (req, res) => {
+    const token = req.headers.authorization;
+    let jwtToken;
+
+    if (token) {
+        jwtToken = token.split(' ')[1];
+    } else {
+        console.log("Authorization header is missing.");
+        return res.status(401).json({ message: 'Authorization token is missing.' });
+    }
+
     try {
+        jwt.verify(jwtToken, process.env.MANAGE_SECRET_KEY);
+
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
@@ -27,7 +39,18 @@ const manage_get_all_orders = async (req, res) => {
 };
 
 const get_order_with_id = async (req, res) => {
+    const token = req.headers.authorization;
+    let jwtToken;
+
+    if (token) {
+        jwtToken = token.split(' ')[1];
+    } else {
+        console.log("Authorization header is missing.");
+        return res.status(401).json({ message: 'Authorization token is missing.' });
+    }
+
     try {
+        jwt.verify(jwtToken, process.env.MANAGE_SECRET_KEY);        
         const { id } = req.params;
         const order = await Order.findById(id);
 
@@ -125,7 +148,18 @@ const get_all_order = async (req, res) => {
 
 
 const upsertOrder = async (req, res) => {
+    const token = req.headers.authorization;
+    let jwtToken;
+
+    if (token) {
+        jwtToken = token.split(' ')[1];
+    } else {
+        console.log("Authorization header is missing.");
+        return res.status(401).json({ message: 'Authorization token is missing.' });
+    }
+
     try {
+        jwt.verify(jwtToken, process.env.MANAGE_SECRET_KEY);
         const { _id, customerDetails, products, totals,currency } = req.body;
 
         if (!_id) {
@@ -228,7 +262,18 @@ const upsertOrder = async (req, res) => {
 
 
 const search_all_product = async (req, res) => {
+    const token = req.headers.authorization;
+    let jwtToken;
+
+    if (token) {
+        jwtToken = token.split(' ')[1];
+    } else {
+        console.log("Authorization header is missing.");
+        return res.status(401).json({ message: 'Authorization token is missing.' });
+    }
+
     try {
+        jwt.verify(jwtToken, process.env.MANAGE_SECRET_KEY);
         const searchQuery = req.query.query || '';
         console.log(searchQuery);
 
@@ -248,7 +293,18 @@ const search_all_product = async (req, res) => {
 };
 
 const get_orders_by_filter_for_invoice = async (req, res) => {
+    const token = req.headers.authorization;
+    let jwtToken;
+
+    if (token) {
+        jwtToken = token.split(' ')[1];
+    } else {
+        console.log("Authorization header is missing.");
+        return res.status(401).json({ message: 'Authorization token is missing.' });
+    }
+
     try {
+        jwt.verify(jwtToken, process.env.MANAGE_SECRET_KEY);
         const { filterType, rangeFrom, rangeTo, status } = req.query;
         let query = {};
 

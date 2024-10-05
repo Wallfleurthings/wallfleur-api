@@ -2,9 +2,12 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const Customer = require('../models/customer.model');
+const Contact_US = require('../models/contactus.model');
+const NewsLetter = require('../models/newsletter.model');
 const {transporter} = require('../config/email');
 const { generateOTPEmailTemplate } = require('../utils/emailTemplates/otpEmailTemplates');
 const { generateForgotPasswordTemplate } = require('../utils/emailTemplates/forgotPasswordTemplate');
+const { generateThankYouEmailTemplate } = require('../utils/emailTemplates/newsLetter');
 const { encryptToken,decryptToken } = require('../utils/encrypt/encrypt');
 
 
@@ -46,9 +49,9 @@ const user_login = async (req, res) => {
 
 const register_customer = async (req, res) => {
     try {
-        const { name, phoneNumber, email, password } = req.body;
+        const { name, phoneNumber, email, password,dialCode } = req.body;
 
-        const existingCustomer = await Customer.findOne({ $or: [{ phone: phoneNumber }, { email: email },{ is_verified:0}] });
+        const existingCustomer = await Customer.findOne({ $or: [{ phone: phoneNumber }, { email: email }] });
         if (existingCustomer) {
             return res.status(400).json({ message: 'Phone number or email already registered' });
         }
@@ -62,7 +65,8 @@ const register_customer = async (req, res) => {
             password: hashedPassword,
             email: email,
             otp: otp,
-            otp_expiry: Date.now() + 10 * 60 * 1000, // OTP valid for 10 minutes
+            dialcode: dialCode,
+            otp_expiry: Date.now() + 10 * 60 * 1000,
             status: 0,
             is_deleted: 0,
             is_verified: 0
@@ -80,10 +84,8 @@ const register_customer = async (req, res) => {
             html: emailTemplate
         };
 
-
         transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
-                console.log('Error sending OTP email:', error);
                 return res.status(500).json({ message: 'Internal Server Error' });
             }
             res.status(201).json({ message: 'Please check your email to verify your account.' });
@@ -124,6 +126,48 @@ const profile = async (req,res) => {
 };
 
 
+const save_address = async (req, res) => {
+    const token = req.headers.authorization;
+    let jwtToken;
+  
+    if (token) {
+      jwtToken = token.split(' ')[1];
+    } else {
+      console.log("Authorization header is missing.");
+      return res.status(401).json({ message: 'Authorization token is missing.' });
+    }
+
+    try {
+        const decodedToken = jwt.verify(jwtToken, process.env.SECRET_KEY);
+        const customerId = decodedToken.userId;
+
+        const { address, country, state, city, postalCode } = req.body;
+
+        if (!address || !country || !state || !city || !postalCode) {
+            return res.status(400).json({ message: 'Missing required fields' });
+        }
+
+        const customer = await Customer.findOne({ id: customerId });
+
+        if (!customer) {
+            return res.status(404).json({ message: 'Customer not found' });
+        }
+
+        customer.address_1 = address;
+        customer.country = country;
+        customer.state = state;
+        customer.city = city;
+        customer.pinCode = postalCode;
+
+        await customer.save();
+
+        res.status(200).json({ message: 'Address saved successfully', customer });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+};
+
 const get_all_customer = async (req, res) => {
     try {
         const result = await Customer.find({is_deleted: 0,status:1});
@@ -135,7 +179,18 @@ const get_all_customer = async (req, res) => {
 };
 
 const manage_get_all_customer = async (req, res) => {
+    const token = req.headers.authorization;
+    let jwtToken;
+
+    if (token) {
+        jwtToken = token.split(' ')[1];
+    } else {
+        console.log("Authorization header is missing.");
+        return res.status(401).json({ message: 'Authorization token is missing.' });
+    }
+
     try {
+        jwt.verify(jwtToken, process.env.MANAGE_SECRET_KEY);        
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
@@ -153,9 +208,20 @@ const manage_get_all_customer = async (req, res) => {
 };
 
 const get_customer_with_id = async (req, res) => {
+    const token = req.headers.authorization;
+    let jwtToken;
+
+    if (token) {
+        jwtToken = token.split(' ')[1];
+    } else {
+        console.log("Authorization header is missing.");
+        return res.status(401).json({ message: 'Authorization token is missing.' });
+    }
+
     try {
+        jwt.verify(jwtToken, process.env.MANAGE_SECRET_KEY);        
         const { id } = req.params;
-        const customerdata = await Customer.find({ id: id }); // Use a different variable name
+        const customerdata = await Customer.find({ id: id });
         if (!customerdata) {
             return res.status(404).json({ message: 'No Category' });
         }
@@ -167,7 +233,18 @@ const get_customer_with_id = async (req, res) => {
 };
 
 const add_customer = async (req, res) => {
+    const token = req.headers.authorization;
+    let jwtToken;
+
+    if (token) {
+        jwtToken = token.split(' ')[1];
+    } else {
+        console.log("Authorization header is missing.");
+        return res.status(401).json({ message: 'Authorization token is missing.' });
+    }
+
     try {
+        jwt.verify(jwtToken, process.env.MANAGE_SECRET_KEY);        
         let { id, name, phone, email, address_1, address_2, address_3, country, state, city, pinCode, status } = req.body;
 
         id = id || ''; 
@@ -390,6 +467,80 @@ const resetPassword = async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
+
+const contact_us = async (req, res) => {
+    try {
+      const { email, name, message } = req.body;
+  
+      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  
+      const existingMessage = await Contact_US.findOne({
+        email: email,
+        created_date: { $gte: twentyFourHoursAgo }
+      });
+  
+      if (existingMessage) {
+        return res.status(200).json({ message: 'Message already received. We will contact you soon.' });
+      }
+  
+      const newContactus = new Contact_US({
+        name: name,
+        email: email,
+        message: message,
+        created_date: new Date()
+      });
+  
+      await newContactus.save();
+      res.status(200).json({ message: 'Thank you, We will contact you soon!' });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Internal Server Error' });
+    }
+};
+
+const newsletter = async (req, res) => {
+    try {
+      const { email } = req.body;
+    
+      const existingMessage = await NewsLetter.findOne({
+        email: email
+      });
+  
+      if (existingMessage) {
+        return res.status(200).json({ message: 'You Have already Subscribed, Thank You' });
+      }
+  
+      const newSubscriber = new NewsLetter({
+        email: email,
+        created_date: new Date()
+      });
+      await newSubscriber.save();
+
+      const emailDate = new Date().toLocaleDateString();
+      const emailTemplate = generateThankYouEmailTemplate(emailDate);
+
+      const mailOptions = {
+          from: process.env.GMAIL_USER,
+          to: email,
+          subject: 'Subscribed to WallfleurThings News Letter',
+          html: emailTemplate
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            return res.status(500).json({ message: 'Internal Server Error' });
+        }
+        res.status(201).json({ message: 'Thank you, For Subscribing' });
+    });
+
+      res.status(200).json({ message: 'Thank you, For Subscribing' });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Internal Server Error' });
+    }
+};
+  
+
   
 
 module.exports = {
@@ -403,5 +554,8 @@ module.exports = {
     update_website_customer,
     verifyOtp,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    save_address,
+    contact_us,
+    newsletter
 };

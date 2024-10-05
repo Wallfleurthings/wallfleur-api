@@ -1,5 +1,6 @@
 const admin = require('../models/adminuser.model');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const secretKey = process.env.ADMIN_SECRET_KEY;
 
@@ -17,7 +18,15 @@ const check_adminuser = async (req, res) => {
         const passwordMatch = await bcrypt.compare(password, user.password);
 
         if (passwordMatch) {
-            res.json({ exists: true });
+            const token = jwt.sign(
+                { 
+                    userId: user._id, 
+                    username: user.username
+                }, 
+                `${process.env.MANAGE_SECRET_KEY}`, 
+                { expiresIn: '12h' }
+            );
+            res.json({ exists: true, token });
         } else {
             res.json({ exists: false });
         }

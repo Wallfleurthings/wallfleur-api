@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const Counter = require('./counter.model');
 
 const productSchema = new mongoose.Schema({
-    id: { type: Number }, // Custom id field, required
+    id: { type: Number },
     name: { type: String, required: true },
     description: { type: String, required: true },
     image1: { type: String },
@@ -18,6 +18,7 @@ const productSchema = new mongoose.Schema({
     sub_category_id: { type: Number, required: true },
     dimension: { type: String, required: true },
     quantity: { type: Number, required: true },
+    maxquantity: { type: Number, required: true },
     show_on_website: { type: Number, required: true },
     show_on_homepage: { type: Number, required: true },
     added_date: { type: Date, default: Date.now },

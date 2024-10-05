@@ -5,6 +5,7 @@ const customerSchema = new mongoose.Schema({
     id: { type: Number },
     name: { type: String, required: true },
     phone: { type: Number, required: true },
+    dialcode: { type: String },
     password: { type: String },
     email: { type: String, required: true },
     country: { type: String },
