@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 
 const get_all_category = async (req, res) => {
     try {
-        const result = await Category.find({is_deleted: 0,status:1});
+        const result = await Category.find({status:1});
         res.status(200).json(result);
     } catch (e) {
         console.error(e);
@@ -31,8 +31,8 @@ const manage_get_all_category = async (req, res) => {
         const skip = (page - 1) * limit;
 
         const [categories, totalCategory] = await Promise.all([
-            Category.find({is_deleted: 0}).sort({ added_date: -1 }).skip(skip).limit(limit),
-            Category.countDocuments({ is_deleted: 0 })
+            Category.find().sort({ added_date: -1 }).skip(skip).limit(limit),
+            Category.countDocuments()
         ]);
         res.status(200).json({ categories, totalCategory });
     } catch (e) {
@@ -54,7 +54,7 @@ const get_category_id = async (req, res) => {
 
     try {
         jwt.verify(jwtToken, process.env.MANAGE_SECRET_KEY);
-        const categories = await Category.find({ status: 1,is_deleted: 0 })
+        const categories = await Category.find({ status: 1})
             .sort({ addedDate: -1 })
             .select('id name');
 
@@ -72,7 +72,7 @@ const get_category_product = async (req, res) => {
         const category = await Category.findOne({ slug }, 'id name');
         const id = category.id;
         result['category_name'] = category.name;
-        product = await Products.find({ category_id:id,is_deleted: 0,show_on_website:1 });
+        product = await Products.find({ category_id:id,show_on_website:1 });
         if (!category) {
             return res.status(404).json({ message: 'Category not found' });
         }
@@ -156,8 +156,7 @@ const add_category = async (req, res) => {
                 slug,
                 status,
                 added_date: new Date(),
-                updated_date: new Date(),
-                is_deleted: 0
+                updated_date: new Date()
             });
 
             await newCategory.save();

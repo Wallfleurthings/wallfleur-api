@@ -98,7 +98,6 @@ const addtobag = async (req, res) => {
         await Bag.insertMany(newBagItems);
       }
   
-      console.log("Products added to bag successfully.");
       res.status(200).json({ message: 'Products added to bag successfully.' });
   
     } catch (err) {
@@ -137,10 +136,8 @@ const removefrombag = (req, res) => {
         Bag.findOneAndDelete({ customer_id: customerId, product_id: productId })
             .then((result) => {
                 if (result) {
-                    console.log("Product removed from bag successfully.");
                     res.status(200).json({ message: 'Product removed from bag successfully.' });
                 } else {
-                    console.log("Product not found in bag.");
                     res.status(404).json({ message: 'Product not found in bag.' });
                 }
             })

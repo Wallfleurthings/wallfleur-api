@@ -12,8 +12,8 @@ const s3 = new AWS.S3({
  * @param {String} folderType - The folder type ('category', 'product', 'common')
  * @returns {Promise} - Resolves with the uploaded image data or rejects with an error
  */
-const uploadImageToS3 = (file,imageName, folderType = '') => {
-  const validFolders = ['category', 'products', 'common'];
+const uploadImageToS3 = (file,imageName, folderType = 'common') => {
+  const validFolders = ['category', 'products', 'common','advertisement'];
   const folderName = validFolders.includes(folderType) ? folderType : '';
 
   const key = folderName ? `${folderName}/${imageName}` : imageName;

@@ -68,7 +68,6 @@ const register_customer = async (req, res) => {
             dialcode: dialCode,
             otp_expiry: Date.now() + 10 * 60 * 1000,
             status: 0,
-            is_deleted: 0,
             is_verified: 0
         });
 
@@ -170,7 +169,7 @@ const save_address = async (req, res) => {
 
 const get_all_customer = async (req, res) => {
     try {
-        const result = await Customer.find({is_deleted: 0,status:1});
+        const result = await Customer.find({status:1});
         res.status(200).json(result);
     } catch (e) {
         console.error(e);
@@ -196,8 +195,8 @@ const manage_get_all_customer = async (req, res) => {
         const skip = (page - 1) * limit;
 
         const [customers, totalCustomers] = await Promise.all([
-            Customer.find({is_deleted: 0}).sort({ added_date: -1 }).skip(skip).limit(limit),
-            Customer.countDocuments({ is_deleted: 0 })
+            Customer.find().sort({ added_date: -1 }).skip(skip).limit(limit),
+            Customer.countDocuments()
         ]);
 
         res.status(200).json({ customers, totalCustomers });
@@ -245,12 +244,13 @@ const add_customer = async (req, res) => {
 
     try {
         jwt.verify(jwtToken, process.env.MANAGE_SECRET_KEY);        
-        let { id, name, phone, email, address_1, address_2, address_3, country, state, city, pinCode, status } = req.body;
+        let { id, name, phone, email, dialcode ,address_1, address_2, address_3, country, state, city, pinCode, status } = req.body;
 
         id = id || ''; 
         name = name || '';
         phone = phone || '';
         email = email || '';
+        dialcode = dialcode || '';
         address_1 = address_1 || '';
         country = country || '';
         state = state || '';
@@ -264,6 +264,7 @@ const add_customer = async (req, res) => {
                 name,
                 phone,
                 email,
+                dialcode,
                 address_1,
                 country,
                 state,
@@ -283,6 +284,7 @@ const add_customer = async (req, res) => {
                 name,
                 phone,
                 email,
+                dialcode,
                 address_1,
                 country,
                 state,
@@ -290,7 +292,6 @@ const add_customer = async (req, res) => {
                 pinCode,
                 status,
                 added_date: new Date(),
-                is_deleted: 0,
                 is_verified: 1
             });
 
@@ -317,11 +318,12 @@ const update_website_customer = async (req, res) => {
     try {
         const decodedToken = jwt.verify(jwtToken, process.env.SECRET_KEY);
         const customerId = decodedToken.userId;
-        let {  name, phone,address_1,country, state, city, pinCode,status } = req.body;
+        let {  name, phone,address_1,country, state, dialcode, city, pinCode,status } = req.body;
 
         name = name || '';
         phone = phone || '';
         address_1 = address_1 || '';
+        dialcode = dialcode || '';
         country = country || '';
         state = state || '';
         city = city || '';
@@ -332,6 +334,7 @@ const update_website_customer = async (req, res) => {
             name,
             phone,
             address_1,
+            dialcode,
             country,
             state,
             city,

@@ -6,7 +6,7 @@ const categoryModel = require('../models/category.model');
 
 const get_all_product = async (req, res) => {
     try {
-        const result = await Products.find({is_deleted: 0,show_on_website:1});
+        const result = await Products.find({show_on_website:1});
         res.status(200).json(result);
     } catch (e) {
         console.error(e);
@@ -32,8 +32,8 @@ const manage_get_all_product = async (req, res) => {
         const skip = (page - 1) * limit;
 
         const [products, totalProducts] = await Promise.all([
-            Products.find({is_deleted: 0}).sort({ added_date: -1 }).skip(skip).limit(limit),
-            Products.countDocuments({ is_deleted: 0 })
+            Products.find().sort({ added_date: -1 }).skip(skip).limit(limit),
+            Products.countDocuments()
         ]);
 
         res.status(200).json({ products, totalProducts });
@@ -107,13 +107,22 @@ const get_alternate_product = async (req, res) => {
         const category_id = product.category_id;
         const prod_id = product.id;
 
-        const alternateProducts = await Products.find({ 
+        const isInternational = req.session.is_international || false; 
+
+        alternateProducts = await Products.find({ 
             category_id: category_id,
-            id: { $ne: prod_id }
+            id: { $ne: prod_id },
+            show_on_website: 1
         });
+
+        alternateProducts = alternateProducts.map(prod => ({
+            ...prod.toObject(), 
+            price: isInternational ? prod.usdprice : prod.inrprice
+        }));
+        
         
         if (!alternateProducts || alternateProducts.length === 0) {
-            return res.status(404).json({ message: 'No alternate products found' });
+            return res.status(200).json({ message: 'No alternate products found' });
         }
         
         res.status(200).json(alternateProducts);
@@ -190,8 +199,7 @@ const add_product = async (req, res) => {
                 show_on_website,
                 show_on_homepage,
                 added_date: new Date(),
-                updated_date:  new Date(),
-                is_deleted:0
+                updated_date:  new Date()
             });
 
             await newProduct.save();

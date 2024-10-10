@@ -86,7 +86,7 @@ const OrderSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
-    transactionId: {
+    trackingId: {
         type: String,
     },
     invoice_id: {

@@ -61,12 +61,19 @@ const createOrder = async (req, res) => {
             }
         }
 
-        const deliveryCharge = 500;
 
         const totalAmountFromProducts = products.reduce((total, product) => {
             const productPrice = productPriceMap[product.id];
             return total + (product.quantity * (productPrice || 0));
         }, 0);
+
+        let deliveryCharge;
+
+        if(isInternational){
+            deliveryCharge = totalAmountFromProducts >= 130 ? 35 : 20;
+        }else{
+            deliveryCharge = totalAmountFromProducts >= 4000 ? 350 : 150;
+        }
 
         const totalAmountWithDelivery = totalAmountFromProducts + deliveryCharge;
 
@@ -97,7 +104,7 @@ const createOrder = async (req, res) => {
             state: userData.state,
             country: userData.country,
             postalCode: userData.postalCode,
-            amount: totalAmountFromProducts,
+            amount: calculatedAmountInCents,
             currency: order.currency,
             receipt: order.receipt,
             order_id: order.id,

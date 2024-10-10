@@ -180,6 +180,7 @@ const upsertOrder = async (req, res) => {
                 mobile: customerDetails.phoneNo,
                 address: customerDetails.address,
                 city: customerDetails.city,
+                dialcode: customerDetails.dialcode,
                 state: customerDetails.state,
                 country: customerDetails.country,
                 postalCode: customerDetails.pincode,
@@ -189,7 +190,7 @@ const upsertOrder = async (req, res) => {
                 order_id: order_id,
                 invoice_id: invoiceId,
                 products: formattedProducts,
-                transactionId: customerDetails.transactionId || '',
+                trackingId: customerDetails.trackingId || '',
                 ordered_date: new Date(),
                 updated_date: new Date()
             });
@@ -209,6 +210,7 @@ const upsertOrder = async (req, res) => {
             order.customer_name = customerDetails.name || order.customer_name;
             order.address = customerDetails.address || order.address;
             order.mobile = customerDetails.phoneNo || order.mobile;
+            order.dialcode = customerDetails.dialcode || order.dialcode;
             order.country = customerDetails.country || order.country;
             order.state = customerDetails.state || order.state;
             order.city = customerDetails.city || order.city;
@@ -216,7 +218,7 @@ const upsertOrder = async (req, res) => {
             order.paymentMode = customerDetails.paymentMode || order.paymentMode;
             order.status = customerDetails.status || order.status;
             order.currency = currency || order.currency;
-            order.transactionId = customerDetails.transactionId;
+            order.trackingId = customerDetails.trackingId;
             order.updated_date = new Date();
 
             const formattedProducts = products.map(product => ({
@@ -275,12 +277,10 @@ const search_all_product = async (req, res) => {
     try {
         jwt.verify(jwtToken, process.env.MANAGE_SECRET_KEY);
         const searchQuery = req.query.query || '';
-        console.log(searchQuery);
 
         const regex = new RegExp(searchQuery, 'i');
 
         const result = await Product.find({
-            is_deleted: 0,
             show_on_website: 1,
             name: { $regex: regex }
         });

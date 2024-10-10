@@ -1,12 +1,13 @@
-const HomepageModel = require('../models/homepage.model');
 const Category = require('../models/category.model');
 const Product = require('../models/product.model');
+const Advertisement = require('../models/advertisement.model');
 
 const get_homedata = async (req, res) => {
     try {
         const result = {};
-        result['category'] = await Category.find({is_deleted: 0,status:1});
-        const products = await Product.find({ is_deleted: 0, show_on_website: 1, show_on_homepage: 1 });
+        result['category'] = await Category.find({status:1});
+        result['advertisement'] = await Advertisement.find({status:1});
+        const products = await Product.find({show_on_website: 1, show_on_homepage: 1 });
 
         const isInternational = req.session.is_international || false; 
 

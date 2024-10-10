@@ -11,6 +11,7 @@ const bag = require('../controllers/bag.js');
 const payment = require('../controllers/payment.js');
 const admin = require('../controllers/adminuser');
 const order = require('../controllers/order');
+const advertisement = require('../controllers/advertisement');
 
 const storage = multer.memoryStorage(); 
 const upload = multer({ storage: storage });
@@ -45,6 +46,9 @@ router.get('/order-detail/:id', order.get_order_with_id)
 router.post('/order-update', order.upsertOrder)
 router.get('/search-order-product', order.search_all_product)
 router.get('/orders', order.get_orders_by_customer_id)
+router.get('/manage-advertisement', advertisement.manage_get_all_advertisement)
+router.get('/advertisement-detail/:_id', advertisement.get_advertisement_with_id)
+router.post('/add-advertisement', upload.single('image'), advertisement.add_advertisement);
 
 router.post('/register', customer.register_customer)
 router.post('/verify-otp', customer.verifyOtp)
@@ -63,6 +67,7 @@ router.post('/set-international-session', homepage.set_international_session)
 router.post('/get-international-session', homepage.get_international_session)
 
 router.post('/delete-api', admin.delete_api)
+router.post('/manage-delete-api', admin.manage_delete_api)
 router.post('/addProduct', product.add_product)
 router.post('/addProductImages', upload.array('productImages', 6), product.add_product_image);
 router.post('/addCategory', category.add_category)

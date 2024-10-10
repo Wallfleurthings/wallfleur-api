@@ -22,18 +22,17 @@ const productSchema = new mongoose.Schema({
     show_on_website: { type: Number, required: true },
     show_on_homepage: { type: Number, required: true },
     added_date: { type: Date, default: Date.now },
-    updated_date: { type: Date, default: Date.now },
-    is_deleted: { type: Number }
+    updated_date: { type: Date, default: Date.now }
 });
 
 
 productSchema.pre('save', async function (next) {
     const doc = this;
-    if (!doc.isNew) return next(); // Skip if not a new document
+    if (!doc.isNew) return next();
 
     try {
         const counter = await Counter.findOneAndUpdate({ _id: 'productId' }, { $inc: { seq: 1 } }, { new: true, upsert: true });
-        doc.id = counter.seq; // Assign the incremented value to the custom id field
+        doc.id = counter.seq;
         next();
     } catch (error) {
         next(error);

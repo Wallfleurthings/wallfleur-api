@@ -45,7 +45,49 @@ const addAdminUser = async (req, res) => {
     }
 
     const { username, password } = req.body;
+    const addAdminUser = async (req, res) => {
+        const authHeader = req.headers.authorization;
     
+        if (!authHeader || authHeader !== `Bearer ${secretKey}`) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+    
+        const { username, password } = req.body;
+
+        console.log(req.body);
+    
+        if (!username || !password) {
+            return res.status(400).json({ error: 'Username and password are required' });
+        }
+    
+        try {
+            const existingUser = await admin.findOne({ username });
+    
+            if (existingUser) {
+                return res.status(400).json({ error: 'Admin user already exists' });
+            }
+    
+            const hashedPassword = await bcrypt.hash(password, 10);
+    
+            const newAdminUser = new admin({
+                username,
+                password: hashedPassword
+            });
+    
+            await newAdminUser.save();
+    
+            res.json({ message: 'Admin user added successfully' });
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ error: 'Server error' });
+        }
+    };
+    
+
+    if (!username || !password) {
+        return res.status(400).json({ error: 'Username and password are required' });
+    }
+
     try {
         const existingUser = await admin.findOne({ username });
 
@@ -69,24 +111,61 @@ const addAdminUser = async (req, res) => {
     }
 };
 
-const delete_api = async (req,res) =>{
-    const { id,database } = req.body;
-    console.log(database);
+
+const delete_api = async (req, res) => {
+    const token = req.headers.authorization;
+    let jwtToken;
+
+    if (token) {
+        jwtToken = token.split(' ')[1];
+    } else {
+        console.log("Authorization header is missing.");
+        return res.status(401).json({ message: 'Authorization token is missing.' });
+    }
 
     try {
-        const Model = require(`../models/${database}.model`); // Adjust the path as per your model location
+        jwt.verify(jwtToken, process.env.MANAGE_SECRET_KEY);
+        const { id, database } = req.body;
 
-        const result = await Model.findOneAndUpdate(
-            { id: id },
-            { $set: { is_deleted: true } },
-            { new: true } // Return the updated document
-        );
+        const Model = require(`../models/${database}.model`);
 
-        if (!result) {
+        const result = await Model.deleteOne({ id: id });
+
+        if (result.deletedCount === 0) {
             return res.status(404).json({ error: 'Admin user not found' });
         }
 
-        res.json({ message: 'Admin user deleted successfully', data: result });
+        res.json({ message: 'Admin user deleted successfully' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+const manage_delete_api = async (req, res) => {
+    const token = req.headers.authorization;
+    let jwtToken;
+
+    if (token) {
+        jwtToken = token.split(' ')[1];
+    } else {
+        console.log("Authorization header is missing.");
+        return res.status(401).json({ message: 'Authorization token is missing.' });
+    }
+
+    try {
+        jwt.verify(jwtToken, process.env.MANAGE_SECRET_KEY);
+        const { _id, database } = req.body;
+
+        const Model = require(`../models/${database}.model`);
+
+        const result = await Model.deleteOne({ _id: _id });
+
+        if (result.deletedCount === 0) {
+            return res.status(404).json({ error: 'Admin user not found' });
+        }
+
+        res.json({ message: 'Admin user deleted successfully' });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -95,8 +174,10 @@ const delete_api = async (req,res) =>{
 
 
 
+
 module.exports = {
     check_adminuser,
     addAdminUser,
-    delete_api
+    delete_api,
+    manage_delete_api
 };

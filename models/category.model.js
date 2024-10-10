@@ -8,8 +8,7 @@ const categorySchema = new mongoose.Schema({
     status: { type: Number, default: false },
     image: { type: String, default: null },
     added_date: { type: Date, default: Date.now },
-    updated_date: { type: Date, default: Date.now },
-    is_deleted: { type: Number }
+    updated_date: { type: Date, default: Date.now }
 });
 
 categorySchema.pre('save', async function (next) {

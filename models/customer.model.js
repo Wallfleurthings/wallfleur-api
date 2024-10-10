@@ -12,12 +12,11 @@ const customerSchema = new mongoose.Schema({
     state: { type: String },
     city: { type: String },
     pinCode: { type: Number },
-    status: { type: Number, default: 0 }, // 0 for inactive, 1 for active
+    status: { type: Number, default: 0 },
     address_1: { type: String },
     address_2: { type: String },
     address_3: { type: String },
     added_date: { type: Date, default: Date.now },
-    is_deleted: { type: Number, default: 0 },
     otp: { type: Number },
     otp_expiry: { type: Date },
     is_verified: { type: Number },

@@ -24,7 +24,7 @@ const generateOrderStatusEmailTemplate = (userData, order, products) => {
             break;
         case 'Shipped':
             statusText = `Your order ID is <strong>${order.order_id}</strong>. Your order has been shipped.`;
-            paymentConfirmationText = `You can track your shipment using the tracking ID:<strong>${order.transactionId}</strong>.`;
+            paymentConfirmationText = `You can track your shipment using the tracking ID:<strong>${order.trackingId}</strong>.`;
             break;
         case 'Delivered':
             statusText = `Your order ID is <strong>${order.order_id}</strong>. Your order has been delivered.`;
