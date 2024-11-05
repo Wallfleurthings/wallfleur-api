@@ -348,8 +348,8 @@ const createPayPalOrder = async (req, res) => {
                     }
                 ],
                 application_context: {
-                    return_url: `http://localhost:3000/paypal`,
-                    cancel_url: 'http://localhost:3000/checkout',
+                    return_url: `hhttps://www.wallfleurthings.com/paypal`,
+                    cancel_url: 'hhttps://www.wallfleurthings.com/checkout',
                     shipping_preference: 'NO_SHIPPING',
                     user_action: 'PAY_NOW',
                     brand_name: 'Wallfleurthings'

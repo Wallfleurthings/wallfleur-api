@@ -446,7 +446,7 @@ const forgotPassword = async (req, res) => {
         await user.save();
 
         // Generate the password reset link using the encrypted token
-        const resetLink = `http://localhost:3002/forgotpassword?token=${encodeURIComponent(encryptedToken)}`;
+        const resetLink = `https://www.wallfleurthings.com/forgotpassword?token=${encodeURIComponent(encryptedToken)}`;
 
         // Prepare email content
         const emailDate = new Date().toLocaleDateString();
