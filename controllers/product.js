@@ -52,15 +52,17 @@ const get_product = async (req, res) => {
         }
         const isInternational = req.session.is_international || false; 
 
-        category = await categoryModel.find({ id:product[0].category_id }).select('name'); 
+        category = await categoryModel.find({ id:product[0].category_id }).select('name slug'); 
         const categoryName = category.length ? category[0].name : null;
+        const categoryslug = category.length ? category[0].slug : null;
 
 
 
         product = product.map(prod => ({
             ...prod.toObject(), 
             price: isInternational ? prod.usdprice : prod.inrprice,
-            category_name : categoryName
+            category_name : categoryName,
+            category_slug : categoryslug
         }));
 
         res.status(200).json(product);
@@ -94,6 +96,46 @@ const get_product_with_id = async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
+
+const get_products_by_search = async (req, res) => {
+    const token = req.headers.authorization;
+    let jwtToken;
+
+    if (token) {
+        jwtToken = token.split(' ')[1];
+    } else {
+        console.log("Authorization header is missing.");
+        return res.status(401).json({ message: 'Authorization token is missing.' });
+    }
+
+    try {
+        jwt.verify(jwtToken, process.env.MANAGE_SECRET_KEY);
+        const { search } = req.query;
+
+        let products;
+        if (search) {
+            products = await Products.find(
+                {
+                    $or: [
+                        { name: { $regex: search, $options: 'i' } }
+                    ]
+                },
+                { id: 1, name: 1, quantity: 1, inrprice: 1, usdprice: 1, added_date: 1, updated_date: 1, show_on_website: 1 }
+            );
+        }else {
+            products = await Products.find().sort({ added_date: -1 }).skip(0).limit(10);
+        }
+        if (products.length === 0) {
+            return res.status(404).json({ message: 'No products found' });
+        }
+
+        res.status(200).json(products);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+};
+
 
 const get_alternate_product = async (req, res) => {
     try {
@@ -366,6 +408,7 @@ module.exports = {
     add_product_image,
     get_product_with_id,
     reduce_quantity,
-    restore_quantity
+    restore_quantity,
+    get_products_by_search
 
 };

@@ -38,6 +38,46 @@ const manage_get_all_orders = async (req, res) => {
     }
 };
 
+const get_order_by_search = async (req, res) => {
+    const token = req.headers.authorization;
+    let jwtToken;
+
+    if (token) {
+        jwtToken = token.split(' ')[1];
+    } else {
+        console.log("Authorization header is missing.");
+        return res.status(401).json({ message: 'Authorization token is missing.' });
+    }
+
+    try {
+        jwt.verify(jwtToken, process.env.MANAGE_SECRET_KEY);
+        const { search } = req.query;
+
+        let Orders;
+        if (search) {
+            Orders = await Order.find(
+                {
+                    $or: [
+                        { customer_name: { $regex: search, $options: 'i' } },
+                        { order_id: { $regex: search, $options: 'i' } }
+                    ]
+                },
+                { _id: 1, customer_name: 1, amount: 1, status: 1, ordered_date: 1, order_id: 1 }
+            );
+        }else {
+            Orders = await Order.find().sort({ ordered_date: -1 }).skip(0).limit(10);
+        }
+        if (Orders.length === 0) {
+            return res.status(404).json({ message: 'No Orders found' });
+        }
+
+        res.status(200).json(Orders);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+};
+
 const get_order_with_id = async (req, res) => {
     const token = req.headers.authorization;
     let jwtToken;
@@ -389,5 +429,6 @@ module.exports = {
     get_all_order,
     upsertOrder,
     get_orders_by_filter_for_invoice,
-    search_all_product
+    search_all_product,
+    get_order_by_search
 };

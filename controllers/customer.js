@@ -124,6 +124,45 @@ const profile = async (req,res) => {
     }
 };
 
+const get_customer_by_search = async (req, res) => {
+    const token = req.headers.authorization;
+    let jwtToken;
+
+    if (token) {
+        jwtToken = token.split(' ')[1];
+    } else {
+        console.log("Authorization header is missing.");
+        return res.status(401).json({ message: 'Authorization token is missing.' });
+    }
+
+    try {
+        jwt.verify(jwtToken, process.env.MANAGE_SECRET_KEY);
+        const { search } = req.query;
+
+        let Customers;
+        if (search) {
+            Customers = await Customer.find(
+                {
+                    $or: [
+                        { name: { $regex: search, $options: 'i' } }
+                    ]
+                },
+                { id: 1, name: 1, quantity: 1, added_date: 1, status: 1 }
+            );
+        }else {
+            Customers = await Customer.find().sort({ added_date: -1 }).skip(0).limit(10);
+        }
+        if (Customers.length === 0) {
+            return res.status(404).json({ message: 'No Customers found' });
+        }
+
+        res.status(200).json(Customers);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+};
+
 
 const save_address = async (req, res) => {
     const token = req.headers.authorization;
@@ -560,5 +599,6 @@ module.exports = {
     resetPassword,
     save_address,
     contact_us,
-    newsletter
+    newsletter,
+    get_customer_by_search
 };

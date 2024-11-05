@@ -60,6 +60,8 @@ router.post('/check-quantity', bag.check_product_quantity)
 router.post('/removefrombag', bag.removefrombag)
 router.post('/createOrder', payment.createOrder)
 router.post('/verifyPayment', payment.verifyPayment)
+router.post('/createPayPalOrder', payment.createPayPalOrder)
+router.post('/capturePayPalPayment', payment.capturePayPalPayment)
 router.post('/addAdmin', admin.addAdminUser)
 router.post('/reduce-quantity', product.reduce_quantity)    
 router.post('/restore-quantity', product.restore_quantity)    
@@ -79,5 +81,11 @@ router.post('/reset-password', customer.resetPassword)
 router.post('/contact-us', customer.contact_us)
 router.post('/subscribe', customer.newsletter)
 router.post('/checkAdmin', admin.check_adminuser)
+
+router.get('/search-product', product.get_products_by_search)
+router.get('/search-category', category.get_category_by_search)
+router.get('/search-customer', customer.get_customer_by_search)
+router.get('/search-order', order.get_order_by_search)
+
 
 module.exports = router

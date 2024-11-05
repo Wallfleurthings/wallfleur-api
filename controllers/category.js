@@ -65,6 +65,45 @@ const get_category_id = async (req, res) => {
     }
 };
 
+const get_category_by_search = async (req, res) => {
+    const token = req.headers.authorization;
+    let jwtToken;
+
+    if (token) {
+        jwtToken = token.split(' ')[1];
+    } else {
+        console.log("Authorization header is missing.");
+        return res.status(401).json({ message: 'Authorization token is missing.' });
+    }
+
+    try {
+        jwt.verify(jwtToken, process.env.MANAGE_SECRET_KEY);
+        const { search } = req.query;
+
+        let categories;
+        if (search) {
+            categories = await Category.find(
+                {
+                    $or: [
+                        { name: { $regex: search, $options: 'i' } }
+                    ]
+                },
+                { id: 1, name: 1, added_date: 1, updated_date: 1, status: 1 }
+            );
+        }else {
+            categories = await Category.find().sort({ added_date: -1 }).skip(0).limit(10);
+        }
+        if (categories.length === 0) {
+            return res.status(404).json({ message: 'No Category found' });
+        }
+
+        res.status(200).json(categories);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+};
+
 const get_category_product = async (req, res) => {
     try {
         const { slug } = req.params;
@@ -217,5 +256,6 @@ module.exports = {
     add_category,
     get_category_with_id,
     get_category_id,
-    add_category_image
+    add_category_image,
+    get_category_by_search
 };

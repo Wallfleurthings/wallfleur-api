@@ -9,7 +9,9 @@
   "author": "Tohoto",
   "license": "ISC",
   "dependencies": {
+    "@paypal/checkout-server-sdk": "^1.0.3",
     "aws-sdk": "^2.1691.0",
+    "axios": "^1.7.7",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.3",
     "connect-mongodb-session": "^5.0.0",
