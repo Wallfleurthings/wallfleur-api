@@ -189,7 +189,7 @@ const add_product = async (req, res) => {
     try {
         jwt.verify(jwtToken, process.env.MANAGE_SECRET_KEY);
 
-        let { id, name, slug, dimension, description, quantity, maxquantity, inrprice, usdprice, category_id, sub_category_id, show_on_website, show_on_homepage } = req.body;
+        let { id, name, slug, dimension, description, quantity, maxquantity, inrprice, usdprice, category_id, sub_category_id, show_on_website, show_on_homepage,preorder } = req.body;
         id = id || ''; 
         name = name || '';
         slug = slug || '';
@@ -203,6 +203,7 @@ const add_product = async (req, res) => {
         sub_category_id = sub_category_id || '';
         show_on_website = show_on_website || 0;
         show_on_homepage = show_on_homepage || 0;
+        preorder = preorder || 0;
 
         if (id) {
             const updatedProduct = await Products.findOneAndUpdate({ id: id }, {
@@ -218,6 +219,7 @@ const add_product = async (req, res) => {
                 sub_category_id,
                 show_on_website,
                 show_on_homepage,
+                preorder,
                 $set: { updated_date: new Date() } 
             }, { new: true });
 
@@ -240,6 +242,7 @@ const add_product = async (req, res) => {
                 sub_category_id,
                 show_on_website,
                 show_on_homepage,
+                preorder,
                 added_date: new Date(),
                 updated_date:  new Date()
             });

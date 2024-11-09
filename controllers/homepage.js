@@ -5,15 +5,21 @@ const Advertisement = require('../models/advertisement.model');
 const get_homedata = async (req, res) => {
     try {
         const result = {};
-        result['category'] = await Category.find({status:1});
+        result['category'] = await Category.find({status:1,show_on_homepage:1});
         result['advertisement'] = await Advertisement.find({status:1});
         const products = await Product.find({show_on_website: 1, show_on_homepage: 1 });
+        const PreOrderproducts = await Product.find({show_on_website: 1, preorder: 1 });
 
         const isInternational = req.session.is_international || false; 
 
         result['product'] = products.map(product => ({
             ...product.toObject(), 
             price: isInternational ? product.usdprice : product.inrprice
+        }));
+
+        result['PreOrderproducts'] = PreOrderproducts.map(PreOrderproduct => ({
+            ...PreOrderproduct.toObject(), 
+            price: isInternational ? PreOrderproduct.usdprice : PreOrderproduct.inrprice
         }));
 
         res.status(200).json(result);

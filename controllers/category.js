@@ -109,12 +109,19 @@ const get_category_product = async (req, res) => {
         const { slug } = req.params;
         const result = {};
         const category = await Category.findOne({ slug }, 'id name');
-        const id = category.id;
-        result['category_name'] = category.name;
-        product = await Products.find({ category_id:id,show_on_website:1 });
         if (!category) {
             return res.status(404).json({ message: 'Category not found' });
         }
+        const id = category.id;
+        result['category_name'] = category.name;
+        product = await Products.find({
+            $or: [
+                { category_id: id },
+                { sub_category_id: id }
+            ],
+            show_on_website: 1
+        });
+
         if (!product) {
             return res.status(404).json({ message: 'No Products' });
         }
@@ -169,18 +176,20 @@ const add_category = async (req, res) => {
 
     try {
         jwt.verify(jwtToken, process.env.MANAGE_SECRET_KEY);
-        let { id, name, slug, status } = req.body;
+        let { id, name, slug, status,show_on_homepage } = req.body;
 
         id = id || ''; 
         name = name || '';
         slug = slug || '';
         status = status || false;
+        show_on_homepage = show_on_homepage || false;
 
         if (id) {
             const updatedCategory = await Category.findOneAndUpdate({ id: id }, {
                 name,
                 slug,
                 status,
+                show_on_homepage,
                 $set: { updated_date: new Date() }
             }, { new: true });
 
@@ -194,6 +203,7 @@ const add_category = async (req, res) => {
                 name,
                 slug,
                 status,
+                show_on_homepage,
                 added_date: new Date(),
                 updated_date: new Date()
             });

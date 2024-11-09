@@ -8,6 +8,7 @@ const categorySchema = new mongoose.Schema({
     status: { type: Number, default: false },
     image: { type: String, default: null },
     added_date: { type: Date, default: Date.now },
+    show_on_homepage: { type: Number, required: true },
     updated_date: { type: Date, default: Date.now }
 });
 
