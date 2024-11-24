@@ -189,11 +189,11 @@ const add_product = async (req, res) => {
     try {
         jwt.verify(jwtToken, process.env.MANAGE_SECRET_KEY);
 
-        let { id, name, slug, dimension, description, quantity, maxquantity, inrprice, usdprice, category_id, sub_category_id, show_on_website, show_on_homepage,preorder } = req.body;
+        let { id, name, slug, note, description, quantity, maxquantity, inrprice, usdprice, category_id, sub_category_id, show_on_website, show_on_homepage,preorder } = req.body;
         id = id || ''; 
         name = name || '';
         slug = slug || '';
-        dimension = dimension || '';
+        note = note || '';
         description = description || '';
         quantity = quantity || 0; 
         maxquantity = maxquantity || 0;
@@ -209,7 +209,7 @@ const add_product = async (req, res) => {
             const updatedProduct = await Products.findOneAndUpdate({ id: id }, {
                 name,
                 slug,
-                dimension,
+                note,
                 quantity,
                 maxquantity,
                 description,
@@ -232,7 +232,7 @@ const add_product = async (req, res) => {
             const newProduct = new Products({
                 name,
                 slug,
-                dimension,
+                note,
                 description,
                 quantity,
                 maxquantity,

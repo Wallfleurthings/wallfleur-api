@@ -16,7 +16,7 @@ const productSchema = new mongoose.Schema({
     slug: { type: String, required: true },
     category_id: { type: Number, required: true },
     sub_category_id: { type: Number, required: true },
-    dimension: { type: String, required: true },
+    note: { type: String },
     quantity: { type: Number, required: true },
     maxquantity: { type: Number, required: true },
     show_on_website: { type: Number, required: true },

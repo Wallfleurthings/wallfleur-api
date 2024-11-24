@@ -426,29 +426,23 @@ const forgotPassword = async (req, res) => {
     const { email } = req.body;
 
     try {
-        // Find the user by email
         const user = await Customer.findOne({ email });
         if (!user) {
             return res.status(400).json({ message: 'User not found' });
         }
 
-        // Generate a reset token and its expiration time
         const token = crypto.randomBytes(20).toString('hex');
         const resetPasswordExpires = Date.now() + 10 * 60 * 1000;
 
-        // Encrypt the token (only the token is passed)
         const dataToEncrypt = `${email}:${token}`;
         const encryptedToken = encryptToken(dataToEncrypt);
 
-        // Save the plain token and expiration time to the user's record
         user.resetPasswordToken = token;
         user.resetPasswordExpires = resetPasswordExpires;
         await user.save();
 
-        // Generate the password reset link using the encrypted token
         const resetLink = `https://www.wallfleurthings.com/forgotpassword?token=${encodeURIComponent(encryptedToken)}`;
 
-        // Prepare email content
         const emailDate = new Date().toLocaleDateString();
         const emailTemplate = generateForgotPasswordTemplate(resetLink, emailDate);
 
@@ -459,7 +453,6 @@ const forgotPassword = async (req, res) => {
             html: emailTemplate
         };
 
-        // Send the reset email
         transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
                 console.error('Error sending reset email:', error);
@@ -478,26 +471,22 @@ const resetPassword = async (req, res) => {
     const { token, newPassword } = req.body;
 
     try {
-        // Decrypt the token to get the email
         const emailToken = decryptToken(token);
 
-        // Separate the email and token
         const [email, plainToken] = emailToken.split(':');        
 
         const user = await Customer.findOne({
             email,
             resetPasswordToken: plainToken,
-            resetPasswordExpires: { $gt: Date.now() } // Check if token is expired
+            resetPasswordExpires: { $gt: Date.now() }
         });
 
         if (!user) {
             return res.status(400).json({ message: 'Password reset token is invalid or has expired.' });
         }
 
-        // Hash the new password
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-        // Update the user's password and clear reset token
         user.password = hashedPassword;
         user.resetPasswordToken = undefined;
         user.resetPasswordExpires = undefined;
