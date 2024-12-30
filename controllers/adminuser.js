@@ -1,7 +1,8 @@
+require('dotenv').config();
 const admin = require('../models/adminuser.model');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-require('dotenv').config();
+const logger = require('../config/logger');
 const secretKey = process.env.ADMIN_SECRET_KEY;
 
 
@@ -31,7 +32,7 @@ const check_adminuser = async (req, res) => {
             res.json({ exists: false });
         }
     } catch (err) {
-        console.error(err);
+        logger.error('An error occurred:', { message: err.message, stack: err.stack });
         res.status(500).json({ error: 'Server error' });
     }
 };
@@ -45,44 +46,6 @@ const addAdminUser = async (req, res) => {
     }
 
     const { username, password } = req.body;
-    const addAdminUser = async (req, res) => {
-        const authHeader = req.headers.authorization;
-    
-        if (!authHeader || authHeader !== `Bearer ${secretKey}`) {
-            return res.status(401).json({ error: 'Unauthorized' });
-        }
-    
-        const { username, password } = req.body;
-
-        console.log(req.body);
-    
-        if (!username || !password) {
-            return res.status(400).json({ error: 'Username and password are required' });
-        }
-    
-        try {
-            const existingUser = await admin.findOne({ username });
-    
-            if (existingUser) {
-                return res.status(400).json({ error: 'Admin user already exists' });
-            }
-    
-            const hashedPassword = await bcrypt.hash(password, 10);
-    
-            const newAdminUser = new admin({
-                username,
-                password: hashedPassword
-            });
-    
-            await newAdminUser.save();
-    
-            res.json({ message: 'Admin user added successfully' });
-        } catch (err) {
-            console.error(err);
-            res.status(500).json({ error: 'Server error' });
-        }
-    };
-    
 
     if (!username || !password) {
         return res.status(400).json({ error: 'Username and password are required' });
@@ -106,7 +69,7 @@ const addAdminUser = async (req, res) => {
 
         res.json({ message: 'Admin user added successfully' });
     } catch (err) {
-        console.error(err);
+        logger.error('An error occurred:', { message: err.message, stack: err.stack });
         res.status(500).json({ error: 'Server error' });
     }
 };
@@ -119,7 +82,7 @@ const delete_api = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -137,7 +100,7 @@ const delete_api = async (req, res) => {
 
         res.json({ message: 'Admin user deleted successfully' });
     } catch (err) {
-        console.error(err);
+        logger.error('An error occurred:', { message: err.message, stack: err.stack });
         res.status(500).json({ error: 'Server error' });
     }
 };
@@ -149,7 +112,7 @@ const manage_delete_api = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -167,7 +130,7 @@ const manage_delete_api = async (req, res) => {
 
         res.json({ message: 'Admin user deleted successfully' });
     } catch (err) {
-        console.error(err);
+        logger.error('An error occurred:', { message: err.message, stack: err.stack });
         res.status(500).json({ error: 'Server error' });
     }
 };

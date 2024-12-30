@@ -5,6 +5,7 @@ const Customer = require('../models/customer.model');
 const Contact_US = require('../models/contactus.model');
 const NewsLetter = require('../models/newsletter.model');
 const {transporter} = require('../config/email');
+const logger = require('../config/logger');
 const { generateOTPEmailTemplate } = require('../utils/emailTemplates/otpEmailTemplates');
 const { generateForgotPasswordTemplate } = require('../utils/emailTemplates/forgotPasswordTemplate');
 const { generateThankYouEmailTemplate } = require('../utils/emailTemplates/newsLetter');
@@ -42,7 +43,7 @@ const user_login = async (req, res) => {
             res.status(400).json({ message: 'Incorrect password. Please enter correct password.' });
         }
     } catch (error) {
-        console.error(error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -71,7 +72,6 @@ const register_customer = async (req, res) => {
             is_verified: 0
         });
 
-        await newCustomer.save();
 
         const emailDate = new Date().toLocaleDateString();
         const emailTemplate = generateOTPEmailTemplate(otp, emailDate);
@@ -85,13 +85,19 @@ const register_customer = async (req, res) => {
 
         transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
-                return res.status(500).json({ message: 'Internal Server Error' });
+                logger.error('An error occurred:', { message: error.message, stack: error.stack });
+            }else{
+                logger.info('Mail send');
             }
             res.status(201).json({ message: 'Please check your email to verify your account.' });
         });
+        await newCustomer.save();
+
+        res.status(201).json({ message: 'Please check your email to verify your account.' });
+
 
     } catch (error) {
-        console.error(error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Internal Server Error' });
 }      
 };
@@ -103,7 +109,7 @@ const profile = async (req,res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -119,7 +125,7 @@ const profile = async (req,res) => {
 
         res.status(200).json(customer);
     } catch (error) {
-        console.error(error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -131,7 +137,7 @@ const get_customer_by_search = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -158,7 +164,7 @@ const get_customer_by_search = async (req, res) => {
 
         res.status(200).json(Customers);
     } catch (error) {
-        console.error(error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -171,7 +177,7 @@ const save_address = async (req, res) => {
     if (token) {
       jwtToken = token.split(' ')[1];
     } else {
-      console.log("Authorization header is missing.");
+      logger.info("Authorization header is missing.");
       return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -201,7 +207,7 @@ const save_address = async (req, res) => {
 
         res.status(200).json({ message: 'Address saved successfully', customer });
     } catch (e) {
-        console.error(e);
+        logger.error('An error occurred:', { message: e.message, stack: e.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -211,7 +217,7 @@ const get_all_customer = async (req, res) => {
         const result = await Customer.find({status:1});
         res.status(200).json(result);
     } catch (e) {
-        console.error(e);
+        logger.error('An error occurred:', { message: e.message, stack: e.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -223,7 +229,7 @@ const manage_get_all_customer = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -240,7 +246,7 @@ const manage_get_all_customer = async (req, res) => {
 
         res.status(200).json({ customers, totalCustomers });
     } catch (e) {
-        console.error(e);
+        logger.error('An error occurred:', { message: e.message, stack: e.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -252,7 +258,7 @@ const get_customer_with_id = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -265,7 +271,7 @@ const get_customer_with_id = async (req, res) => {
         }
         res.status(200).json(customerdata);
     } catch (error) {
-        console.error(error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -277,7 +283,7 @@ const add_customer = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -339,7 +345,7 @@ const add_customer = async (req, res) => {
             res.status(201).json({ message: 'Customer added successfully', customer: newCustomer });
         }
     } catch (e) {
-        console.error(e);
+        logger.error('An error occurred:', { message: e.message, stack: e.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -351,7 +357,7 @@ const update_website_customer = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
     try {
@@ -387,7 +393,7 @@ const update_website_customer = async (req, res) => {
 
         res.status(200).json({ message: 'Profile updated successfully', customer: updatedCustomer });
     } catch (e) {
-        console.error(e);
+        logger.error('An error occurred:', { message: e.message, stack: e.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -417,7 +423,7 @@ const verifyOtp = async (req, res) => {
 
         res.status(200).json({ message: 'OTP verified successfully. Your account is now active.' });
     } catch (error) {
-        console.error(error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -455,13 +461,13 @@ const forgotPassword = async (req, res) => {
 
         transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
-                console.error('Error sending reset email:', error);
+                logger.error('An error occurred:', { message: error.message, stack: error.stack });
                 return res.status(500).json({ message: 'Internal Server Error' });
             }
             res.status(200).json({ message: 'Please check your email to reset your password.' });
         });
     } catch (error) {
-        console.error('Error:', error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -494,7 +500,7 @@ const resetPassword = async (req, res) => {
 
         res.status(200).json({ message: 'Password has been reset successfully.' });
     } catch (error) {
-        console.error('Error:', error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -524,7 +530,7 @@ const contact_us = async (req, res) => {
       await newContactus.save();
       res.status(200).json({ message: 'Thank you, We will contact you soon!' });
     } catch (error) {
-      console.error(error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
       res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -566,7 +572,7 @@ const newsletter = async (req, res) => {
 
       res.status(200).json({ message: 'Thank you, For Subscribing' });
     } catch (error) {
-      console.error(error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
       res.status(500).json({ message: 'Internal Server Error' });
     }
 };

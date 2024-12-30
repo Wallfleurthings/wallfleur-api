@@ -1,7 +1,7 @@
 const Products = require('../models/product.model');
-const Categorymodel = require('../models/category.model');
 const { uploadImageToS3 } = require('../config/s3');
 const jwt = require('jsonwebtoken');
+const logger = require('../config/logger');
 const categoryModel = require('../models/category.model');
 
 const get_all_product = async (req, res) => {
@@ -9,7 +9,7 @@ const get_all_product = async (req, res) => {
         const result = await Products.find({show_on_website:1});
         res.status(200).json(result);
     } catch (e) {
-        console.error(e);
+        logger.error('An error occurred:', { message: e.message, stack: e.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -21,7 +21,7 @@ const manage_get_all_product = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -38,7 +38,7 @@ const manage_get_all_product = async (req, res) => {
 
         res.status(200).json({ products, totalProducts });
     } catch (e) {
-        console.error(e);
+        logger.error('An error occurred:', { message: e.message, stack: e.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -46,9 +46,9 @@ const manage_get_all_product = async (req, res) => {
 const get_product = async (req, res) => {
     try {
         const { slug } = req.params;
-        product = await Products.find({ slug:slug });
-        if (!product) {
-            return res.status(404).json({ message: 'No Products' });
+        product = await Products.find({ slug:slug,show_on_website:1 });
+        if (product.length === 0) { 
+            return res.status(200).json({ message: 'No Products' });
         }
         const isInternational = req.session.is_international || false; 
 
@@ -67,7 +67,7 @@ const get_product = async (req, res) => {
 
         res.status(200).json(product);
     } catch (error) {
-        console.error(error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -78,7 +78,7 @@ const get_product_with_id = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -92,7 +92,7 @@ const get_product_with_id = async (req, res) => {
 
         res.status(200).json(product);
     } catch (error) {
-        console.error(error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -104,7 +104,7 @@ const get_products_by_search = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -131,7 +131,7 @@ const get_products_by_search = async (req, res) => {
 
         res.status(200).json(products);
     } catch (error) {
-        console.error(error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -169,7 +169,7 @@ const get_alternate_product = async (req, res) => {
         
         res.status(200).json(alternateProducts);
     } catch (error) {
-        console.error(error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -182,7 +182,7 @@ const add_product = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -252,7 +252,7 @@ const add_product = async (req, res) => {
             res.status(200).json({ message: 'Product added successfully', product_id: newProduct.id  });
         }
     } catch (e) {
-        console.error(e);
+        logger.error('An error occurred:', { message: e.message, stack: e.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -264,7 +264,7 @@ const add_product_image = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -293,7 +293,7 @@ const add_product_image = async (req, res) => {
             
             imageUrls[imageFields[i]] = imageName;
         } catch (error) {
-            console.error('Error uploading image:', error);
+            logger.error('An error occurred:', { message: error.message, stack: error.stack });
             return res.status(500).json({ message: 'Error uploading images' });
             }
         }
@@ -313,7 +313,7 @@ const add_product_image = async (req, res) => {
 
         res.status(200).json({ message: 'Images added/updated successfully', product: updatedProduct });
     } catch (error) {
-        console.error('Error:', error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -326,7 +326,7 @@ const reduce_quantity = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -356,7 +356,7 @@ const reduce_quantity = async (req, res) => {
 
         res.status(200).json({ results });
     } catch (error) {
-        console.error('Error reducing product quantity:', error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Server error' });
     }
 };
@@ -369,7 +369,7 @@ const restore_quantity = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -394,7 +394,7 @@ const restore_quantity = async (req, res) => {
 
         res.status(200).json({ results });
     } catch (error) {
-        console.error('Error restoring product quantity:', error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Server error' });
     }
 };

@@ -1,3 +1,4 @@
+require('dotenv').config();
 const Order = require('../models/payment.model');
 const Bag = require('../models/bag.model');
 const Customer = require('../models/customer.model');
@@ -8,8 +9,7 @@ const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
-
-require('dotenv').config();
+const logger = require('../config/logger');
 
 const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
@@ -24,7 +24,7 @@ const createOrder = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -38,14 +38,13 @@ const createOrder = async (req, res) => {
             return res.status(400).json({ message: 'Amount is missing in request body.' });
         }
 
-        const isInternational = req.session.is_international || false; 
         const amountInCents = Math.round(amount * 100);
 
         const productIds = products.map(product => product.id);
-        const productDetails = await Product.find({ id: { $in: productIds } }).select(`id name quantity ${isInternational ? 'usdprice' : 'inrprice'}`); 
+        const productDetails = await Product.find({ id: { $in: productIds } }).select(`id name quantity inrprice`); 
 
         const productPriceMap = productDetails.reduce((map, product) => {
-            map[product.id.toString()] = isInternational ? product.usdprice : product.inrprice;
+            map[product.id.toString()] = product.inrprice;
             return map;
         }, {});
 
@@ -69,13 +68,7 @@ const createOrder = async (req, res) => {
             return total + (product.quantity * (productPrice || 0));
         }, 0);
 
-        let deliveryCharge;
-
-        if(isInternational){
-            deliveryCharge = totalAmountFromProducts >= 130 ? 35 : 20;
-        }else{
-            deliveryCharge = totalAmountFromProducts >= 4000 ? 350 : 150;
-        }
+        let deliveryCharge = totalAmountFromProducts >= 4000 ? 350 : 150;
 
         const totalAmountWithDelivery = totalAmountFromProducts + deliveryCharge;
 
@@ -87,7 +80,7 @@ const createOrder = async (req, res) => {
 
         const options = {
             amount: amountInCents,
-            currency: isInternational ? 'USD' : 'INR',
+            currency: 'INR',
             receipt: `receipt_${Date.now()}`
         };
 
@@ -122,7 +115,7 @@ const createOrder = async (req, res) => {
         await newOrder.save();
         res.status(200).json(order);
     } catch (error) {
-        console.error("Error creating order:", error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -136,7 +129,7 @@ const verifyPayment = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -208,9 +201,9 @@ const verifyPayment = async (req, res) => {
 
             transporter.sendMail(mailOptions, (error, info) => {
                 if (error) {
-                    console.error('Error sending order confirmation email:', error);
+                    logger.error('An error occurred:', { message: error.message, stack: error.stack });
                 } else {
-                    console.log('Order confirmation email sent:', info.response);
+                    logger.info('Order confirmation email sent:', info.response);
                 }
             });
 
@@ -223,7 +216,7 @@ const verifyPayment = async (req, res) => {
             res.status(400).json({ status: 'failure' });
         }
     } catch (error) {
-        console.error("Error verifying payment:", error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -251,7 +244,7 @@ const createPayPalOrder = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -265,12 +258,11 @@ const createPayPalOrder = async (req, res) => {
             return res.status(400).json({ message: 'Amount is missing in request body.' });
         }
 
-        const isInternational = req.session.is_international || false;
         const productIds = products.map(product => product.id);
-        const productDetails = await Product.find({ id: { $in: productIds } }).select(`id name quantity ${isInternational ? 'usdprice' : 'inrprice'}`);
+        const productDetails = await Product.find({ id: { $in: productIds } }).select(`id name quantity usdprice`);
 
         const productPriceMap = productDetails.reduce((map, product) => {
-            map[product.id.toString()] = isInternational ? product.usdprice : product.inrprice;
+            map[product.id.toString()] =  product.usdprice;
             return map;
         }, {});
 
@@ -293,16 +285,12 @@ const createPayPalOrder = async (req, res) => {
             return total + (product.quantity * (productPrice || 0));
         }, 0);
 
-        let deliveryCharge;
-        if (isInternational) {
-            deliveryCharge = totalAmountFromProducts >= 130 ? 35 : 20;
-        } else {
-            deliveryCharge = totalAmountFromProducts >= 4000 ? 350 : 150;
-        }
+        let deliveryCharge = totalAmountFromProducts >= 130 ? 35 : 20;
 
         const totalAmountWithDelivery = totalAmountFromProducts + deliveryCharge;
 
         const calculatedAmountInCents = Math.round(totalAmountWithDelivery * 100);
+
         if (Math.round(amount * 100) !== calculatedAmountInCents) {
             return res.status(400).json({ message: 'Amount mismatch' });
         }
@@ -311,7 +299,7 @@ const createPayPalOrder = async (req, res) => {
             name: product.name,
             quantity: product.quantity,
             unit_amount: {
-                currency_code: isInternational ? 'USD' : 'USD',
+                currency_code: 'USD',
                 value: productPriceMap[product.id].toFixed(2)
             }
         }));
@@ -332,15 +320,15 @@ const createPayPalOrder = async (req, res) => {
                     {
                         items: items,
                         amount: {
-                            currency_code: isInternational ? 'USD' : 'USD',
+                            currency_code: 'USD',
                             value: totalAmountWithDelivery.toFixed(2),
                             breakdown: {
                                 item_total: {
-                                    currency_code: isInternational ? 'USD' : 'USD',
+                                    currency_code: 'USD',
                                     value: totalAmountFromProducts.toFixed(2),
                                 },
                                 shipping: {
-                                    currency_code: isInternational ? 'USD' : 'USD',
+                                    currency_code: 'USD',
                                     value: deliveryCharge.toFixed(2),
                                 }
                             }
@@ -372,7 +360,7 @@ const createPayPalOrder = async (req, res) => {
             country: userData.country,
             postalCode: userData.postalCode,
             amount: calculatedAmountInCents,
-            currency: isInternational ? 'USD' : 'INR',
+            currency: 'USD',
             receipt: response.data.id,
             order_id: response.data.id,
             invoice_id: invoiceId,
@@ -391,7 +379,7 @@ const createPayPalOrder = async (req, res) => {
 
         res.status(201).json({ approvalUrl: `${approvalUrl}&order_id=${orderId}` });
     } catch (error) {
-        console.error('Error creating PayPal order:', error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -403,7 +391,7 @@ const capturePayPalPayment = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -450,11 +438,7 @@ const capturePayPalPayment = async (req, res) => {
         }
 
         const accessToken = await generateAccessToken();
-        console.log(accessToken);
-        console.log(order_id);
         const url = `${process.env.PAYPAL_BASE_URL}/v2/checkout/orders/${order_id}/capture`;
-        console.log(url);
-
 
         const response = await axios.post(url, {}, {
             headers: {
@@ -465,9 +449,6 @@ const capturePayPalPayment = async (req, res) => {
 
         if (response.data.status === "COMPLETED") {
             transaction_id= response.data.purchase_units[0].payments.captures[0].id;
-            console.log("Transaction completed successfully.");
-            console.log("Capture ID:", response.data.purchase_units[0].payments.captures[0].id);
-
 
             order.payment_id = transaction_id;
             order.status = 'paid';
@@ -489,9 +470,9 @@ const capturePayPalPayment = async (req, res) => {
 
             transporter.sendMail(mailOptions, (error, info) => {
                 if (error) {
-                    console.error('Error sending order confirmation email:', error);
+                    logger.error('An error occurred:', { message: error.message, stack: error.stack });
                 } else {
-                    console.log('Order confirmation email sent:', info.response);
+                    logger.info('Order confirmation email sent:', info.response);
                 }
             });
 
@@ -504,7 +485,7 @@ const capturePayPalPayment = async (req, res) => {
             res.status(400).json({ status: 'failure' });
         }
     } catch (error) {
-        console.error("Error verifying payment:", error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };

@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const Product = require('../models/product.model');
 const Bag = require('../models/bag.model');
+const logger = require('../config/logger');
 
 const check_bag = async (req, res) => {
     try {
@@ -11,7 +12,7 @@ const check_bag = async (req, res) => {
         if (token) {
             jwtToken = token.split(' ')[1];
         } else {
-            console.log("Authorization header is missing.");
+            logger.info("Authorization header is missing.");
             return res.status(401).json({ message: 'Authorization token is missing.' });
         }
 
@@ -43,7 +44,7 @@ const check_bag = async (req, res) => {
 
         res.status(200).json({ products });
     } catch (error) {
-        console.error(error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         if (error.name === 'JsonWebTokenError') {
             res.status(400).json({ message: 'Invalid token. Please provide a valid token.' });
         } else if (error.name === 'TokenExpiredError') {
@@ -61,7 +62,7 @@ const addtobag = async (req, res) => {
     if (token) {
       jwtToken = token.split(' ')[1];
     } else {
-      console.log("Authorization header is missing.");
+      logger.info("Authorization header is missing.");
       return res.status(401).json({ message: 'Authorization token is missing.' });
     }
   
@@ -101,6 +102,7 @@ const addtobag = async (req, res) => {
       res.status(200).json({ message: 'Products added to bag successfully.' });
   
     } catch (err) {
+        logger.error('An error occurred:', { message: err.message, stack: err.stack });
       if (err.name === 'JsonWebTokenError') {
         res.status(400).json({ message: 'Invalid token. Please provide a valid token.' });
       } else if (err.name === 'TokenExpiredError') {
@@ -120,7 +122,7 @@ const removefrombag = (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -146,7 +148,7 @@ const removefrombag = (req, res) => {
                 res.status(500).json({ message: 'Internal Server Error' });
             });
     } catch (err) {
-        console.error("Invalid JWT Token:", err);
+        logger.error('An error occurred:', { message: err.message, stack: err.stack });
         res.status(401).json({ message: 'Invalid or expired token.' });
     }
 };
@@ -159,7 +161,7 @@ const cartCount = async (req, res) => {
         if (token) {
             jwtToken = token.split(' ')[1];
         } else {
-            console.log("Authorization header is missing.");
+            logger.info("Authorization header is missing.");
             return res.status(401).json({ message: 'Authorization token is missing.' });
         }
 
@@ -171,7 +173,7 @@ const cartCount = async (req, res) => {
 
         res.status(200).json({ count });
     } catch (error) {
-        console.error(error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         if (error.name === 'JsonWebTokenError') {
             res.status(400).json({ message: 'Invalid token. Please provide a valid token.' });
         } else if (error.name === 'TokenExpiredError') {
@@ -182,53 +184,79 @@ const cartCount = async (req, res) => {
     }
 };
 
-const check_product_quantity = async (req, res) => {
-    const { products } = req.body;
+const check_products = async (req, res) => {
+    const { products } = req.body;  // Array of products with { productId, quantity }
     const token = req.headers.authorization;
     let jwtToken;
 
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
     try {
         jwt.verify(jwtToken, process.env.SECRET_KEY);
 
+        // Extract all productIds from the cart
+        const productIds = products.map(product => product.productId);
+        const isInternational = req.session.is_international || false; 
+
+        // Query all products in a single database call
+        const productData = await Product.find({ id: { $in: productIds } });
+
+        const productMap = productData.reduce((map, product) => {
+            map[product.id] = product;  // Map product data by productId
+            return map;
+        }, {});
+
         const results = [];
-        let prop;
 
+        // Process each product in the cart
         for (const { productId, quantity } of products) {
-            const productdata = await Product.findOne({ id: productId });
-            prop = productdata;
+            const product = productMap[productId];
 
-            if (!productdata) {
+            if (!product) {
                 results.push({ productId, message: 'Product not found' });
                 continue;
             }
 
-            if (productdata.quantity == 2) {
-                results.push({ productId,name:productdata.name, message: 'Out of stock' });
+            // Check stock status and update message accordingly
+            let message = '';
+            if (product.quantity <= 0) {
+                message = 'Out of stock';
+            } else if ((product.quantity - 2) < quantity) {
+                message = 'Quantity changed';
             }
 
-            if ((productdata.quantity - 2) < quantity) {
-                results.push({ productId,name:productdata.name, message: 'quantity changed' });
-            }
+            // Get the appropriate price based on international status
+            const price = isInternational == true ? product.usdprice : product.inrprice;
+
+            // Push result with price and availability message
+            results.push({
+                productId,
+                name: product.name,
+                price, 
+                message
+            });
         }
+
+        // Send the result back to the client
         res.status(200).json({ results });
+
     } catch (error) {
-        console.error('Error reducing product quantity:', error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Server error' });
     }
 };
+
 
 
 module.exports = {
     check_bag,
     addtobag,
     removefrombag,
-    check_product_quantity,
+    check_products,
     cartCount
 };

@@ -1,4 +1,5 @@
 const AWS = require('aws-sdk');
+const logger = require('../config/logger');
 
 const s3 = new AWS.S3({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -29,7 +30,7 @@ const uploadImageToS3 = (file,imageName, folderType = 'common') => {
   return new Promise((resolve, reject) => {
     s3.upload(params, (err, data) => {
       if (err) {
-        console.error('Error uploading to S3:', err);
+        logger.error('error uploadin to s3:', { message: err.message, stack: err.stack });
         reject(err);
       } else {
         resolve(data);

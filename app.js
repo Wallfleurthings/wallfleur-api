@@ -4,6 +4,7 @@ const route = require('./routes/route');
 const session = require('express-session');
 require('dotenv').config();
 require('./config/mongo');
+const logger = require('./config/logger');
 
 const app = express();
 
@@ -28,7 +29,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(session({
     secret: process.env.ADMIN_SECRET_KEY,
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
     cookie: { 
         secure: false,
         httpOnly: true,
@@ -37,5 +38,14 @@ app.use(session({
 }));
 
 app.use(route);
+
+const errorHandler = (err, req, res, next) => {
+  logger.error(`Unhandled error: ${err.message}`);
+  res.status(500).json({
+    error: 'Something went wrong, please try again later.'
+  });
+};
+
+app.use(errorHandler);
 
 module.exports = app;

@@ -1,6 +1,7 @@
 const Category = require('../models/category.model');
 const Product = require('../models/product.model');
 const Advertisement = require('../models/advertisement.model');
+const logger = require('../config/logger');
 
 const get_homedata = async (req, res) => {
     try {
@@ -24,7 +25,7 @@ const get_homedata = async (req, res) => {
 
         res.status(200).json(result);
     } catch (e) {
-        console.error(e);
+        logger.error('An error occurred:', { message: e.message, stack: e.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -32,22 +33,26 @@ const get_homedata = async (req, res) => {
 const search = async (req, res) => {
     try {
         const { query } = req.query;
+
         const products = await Product.find({
-            name: new RegExp(query, 'i') // Case-insensitive search
-        }, 'name slug'); // Only return the 'name' field
+            name: new RegExp(query, 'i'),  // Case-insensitive search
+            show_on_website: 1  // Check if the product's status is 1
+        }, 'name slug');
+
         res.json(products);
     } catch (error) {
-        console.error('Error searching products:', error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ error: 'Server error' });
     }
 };
 
+
 const set_international_session = async (req, res) => {
     try {
-        req.session.is_international = true;
+        req.session.is_international = req.body.flag === 1 ? false : true;
         res.status(200).json(req.session.is_international );
     } catch (error) {
-        console.error('Error unable to set session:', error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ error: 'Server error' });
     }
 };
@@ -56,7 +61,7 @@ const get_international_session = async (req, res) => {
     try {
         res.status(200).json(req.session );
     } catch (error) {
-        console.error('Error unable to set session:', error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ error: 'Server error' });
     }
 };

@@ -1,12 +1,11 @@
+require('dotenv').config();
 const Order = require('../models/payment.model');
 const Product = require('../models/product.model');
 const Customer = require('../models/customer.model');
-const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const {transporter} = require('../config/email');
-const { v4: uuidv4 } = require('uuid');
+const logger = require('../config/logger');
 const { generateOrderStatusEmailTemplate } = require('../utils/emailTemplates/orderStatusEmailTemplate');
-require('dotenv').config();
 
 const manage_get_all_orders = async (req, res) => {
     const token = req.headers.authorization;
@@ -15,7 +14,7 @@ const manage_get_all_orders = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -33,7 +32,7 @@ const manage_get_all_orders = async (req, res) => {
 
         res.status(200).json({ orders, totalOrders });
     } catch (e) {
-        console.error(e);
+        logger.error('An error occurred:', { message: e.message, stack: e.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -45,7 +44,7 @@ const get_order_by_search = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -73,7 +72,7 @@ const get_order_by_search = async (req, res) => {
 
         res.status(200).json(Orders);
     } catch (error) {
-        console.error(error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -85,7 +84,7 @@ const get_order_with_id = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -120,7 +119,7 @@ const get_order_with_id = async (req, res) => {
 
         res.status(200).json({ order, products });
     } catch (error) {
-        console.error(error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -132,7 +131,7 @@ const get_orders_by_customer_id = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
     try {
@@ -168,7 +167,7 @@ const get_orders_by_customer_id = async (req, res) => {
 
         res.status(200).json({ orderDetails });
     } catch (error) {
-        console.error(error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -181,7 +180,7 @@ const get_all_order = async (req, res) => {
         const result = await Order.find();
         res.status(200).json(result);
     } catch (e) {
-        console.error(e);
+        logger.error('An error occurred:', { message: e.message, stack: e.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -194,7 +193,7 @@ const upsertOrder = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -289,7 +288,7 @@ const upsertOrder = async (req, res) => {
 
                 transporter.sendMail(mailOptions, (error, info) => {
                     if (error) {
-                        console.log('Error sending status update email:', error);
+                        logger.error('An error occurred:', { message: error.message, stack: error.stack });
                     }
                 });
             }
@@ -297,7 +296,7 @@ const upsertOrder = async (req, res) => {
             res.status(200).json(order);
         }
     } catch (error) {
-        console.error("Error upserting order:", error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -310,7 +309,7 @@ const search_all_product = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -327,7 +326,7 @@ const search_all_product = async (req, res) => {
 
         res.status(200).json(result);
     } catch (e) {
-        console.error(e);
+        logger.error('An error occurred:', { message: e.message, stack: e.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -339,7 +338,7 @@ const get_orders_by_filter_for_invoice = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -416,7 +415,7 @@ const get_orders_by_filter_for_invoice = async (req, res) => {
 
         res.status(200).json({ orders: orderDetailsWithProducts });
     } catch (error) {
-        console.error(error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };

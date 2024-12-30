@@ -2,13 +2,14 @@ const Category = require('../models/category.model');
 const Products = require('../models/product.model');
 const { uploadImageToS3 } = require('../config/s3');
 const jwt = require('jsonwebtoken');
+const logger = require('../config/logger');
 
 const get_all_category = async (req, res) => {
     try {
         const result = await Category.find({status:1});
         res.status(200).json(result);
     } catch (e) {
-        console.error(e);
+        logger.error('An error occurred:', { message: e.message, stack: e.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -20,7 +21,7 @@ const manage_get_all_category = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -36,7 +37,7 @@ const manage_get_all_category = async (req, res) => {
         ]);
         res.status(200).json({ categories, totalCategory });
     } catch (e) {
-        console.error(e);
+        logger.error('An error occurred:', { message: e.message, stack: e.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -48,7 +49,7 @@ const get_category_id = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -60,7 +61,7 @@ const get_category_id = async (req, res) => {
 
         res.status(200).json(categories);
     } catch (e) {
-        console.error(e);
+        logger.error('An error occurred:', { message: e.message, stack: e.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -72,7 +73,7 @@ const get_category_by_search = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -99,7 +100,7 @@ const get_category_by_search = async (req, res) => {
 
         res.status(200).json(categories);
     } catch (error) {
-        console.error(error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -108,9 +109,9 @@ const get_category_product = async (req, res) => {
     try {
         const { slug } = req.params;
         const result = {};
-        const category = await Category.findOne({ slug }, 'id name');
+        const category = await Category.findOne({ slug,status: 1 }, 'id name');
         if (!category) {
-            return res.status(404).json({ message: 'Category not found' });
+            return res.status(200).json({ message: 'Category not found' });
         }
         const id = category.id;
         result['category_name'] = category.name;
@@ -132,7 +133,7 @@ const get_category_product = async (req, res) => {
         }));
         res.status(200).json(result);
     } catch (error) {
-        console.error(error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -144,7 +145,7 @@ const get_category_with_id = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -157,7 +158,7 @@ const get_category_with_id = async (req, res) => {
         }
         res.status(200).json(categoryData);
     } catch (error) {
-        console.error(error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -170,7 +171,7 @@ const add_category = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -213,7 +214,7 @@ const add_category = async (req, res) => {
             res.status(201).json({ message: 'Category added successfully', category: newCategory });
         }
     } catch (error) {
-        console.error('Error:', error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -225,7 +226,7 @@ const add_category_image = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -252,7 +253,7 @@ const add_category_image = async (req, res) => {
             res.status(200).json({ message: 'Category Image updated successfully', category: updatedCategory });
         }
     } catch (error) {
-        console.error('Error:', error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };

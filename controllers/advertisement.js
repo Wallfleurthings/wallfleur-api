@@ -1,6 +1,7 @@
 const Advertisement = require('../models/advertisement.model');
 const { uploadImageToS3 } = require('../config/s3');
 const jwt = require('jsonwebtoken');
+const logger = require('../config/logger');
 
 const manage_get_all_advertisement = async (req, res) => {
     const token = req.headers.authorization;
@@ -9,7 +10,7 @@ const manage_get_all_advertisement = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info('Authorization header is missing.');
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -25,7 +26,7 @@ const manage_get_all_advertisement = async (req, res) => {
         ]);
         res.status(200).json({ advertisement, totalAdvertisement });
     } catch (e) {
-        console.error(e);
+        logger.error('An error occurred:', { message: e.message, stack: e.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -37,7 +38,7 @@ const add_advertisement = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info('Authorization header is missing.');
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -80,7 +81,7 @@ const add_advertisement = async (req, res) => {
             res.status(201).json({ message: 'Advertisement added successfully', category: newAdvertisement });
         }
     } catch (error) {
-        console.error('Error:', error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
@@ -92,7 +93,7 @@ const get_advertisement_with_id = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        console.log("Authorization header is missing.");
+        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -105,7 +106,7 @@ const get_advertisement_with_id = async (req, res) => {
         }
         res.status(200).json(advertisementData);
     } catch (error) {
-        console.error(error);
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
