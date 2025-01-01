@@ -71,7 +71,15 @@ router.post('/get-international-session', homepage.get_international_session)
 router.post('/delete-api', admin.delete_api)
 router.post('/manage-delete-api', admin.manage_delete_api)
 router.post('/addProduct', product.add_product)
-router.post('/addProductImages', upload.array('productImages', 6), product.add_product_image);
+router.post('/addProductImages', upload.fields([
+    { name: 'image1', maxCount: 1 },
+    { name: 'image2', maxCount: 1 },
+    { name: 'image3', maxCount: 1 },
+    { name: 'image4', maxCount: 1 },
+    { name: 'image5', maxCount: 1 },
+    { name: 'image6', maxCount: 1 }
+  ]), product.add_product_image);
+  
 router.post('/addCategory', category.add_category)
 router.post('/addImageCategory', upload.single('categoryImage'), category.add_category_image);
 router.post('/addCustomer', customer.add_customer)

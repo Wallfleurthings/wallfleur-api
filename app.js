@@ -40,7 +40,8 @@ app.use(session({
 app.use(route);
 
 const errorHandler = (err, req, res, next) => {
-  logger.error(`Unhandled error: ${err.message}`);
+  logger.error('Unhandled error: ', { message: err.message, stack: err.stack });
+
   res.status(500).json({
     error: 'Something went wrong, please try again later.'
   });
