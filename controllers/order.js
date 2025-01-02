@@ -14,7 +14,6 @@ const manage_get_all_orders = async (req, res) => {
     if (token) {
         jwtToken = token.split(' ')[1];
     } else {
-        logger.info("Authorization header is missing.");
         return res.status(401).json({ message: 'Authorization token is missing.' });
     }
 
@@ -24,10 +23,13 @@ const manage_get_all_orders = async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
+        const { dialcode } = req.query;
+
+        const filter = dialcode ? { dialcode } : {};
 
         const [orders, totalOrders] = await Promise.all([
-            Order.find().sort({ ordered_date: -1 }).skip(skip).limit(limit),
-            Order.countDocuments()
+            Order.find(filter).sort({ ordered_date: -1 }).skip(skip).limit(limit),
+            Order.countDocuments(filter)
         ]);
 
         res.status(200).json({ orders, totalOrders });
@@ -420,6 +422,88 @@ const get_orders_by_filter_for_invoice = async (req, res) => {
     }
 };
 
+const get_orders_export_list = async (req, res) => {
+    const token = req.headers.authorization;
+    let jwtToken;
+
+    if (token) {
+        jwtToken = token.split(' ')[1];
+    } else {
+        logger.info("Authorization header is missing.");
+        return res.status(401).json({ message: 'Authorization token is missing.' });
+    }
+
+    try {
+        jwt.verify(jwtToken, process.env.MANAGE_SECRET_KEY);
+        const { rangeFrom, rangeTo, status } = req.query;
+        let query = {};
+
+        if (!rangeFrom || !rangeTo) {
+            return res.status(400).json({ message: 'Invalid date range' });
+        }
+
+
+
+            const fromDate = new Date(rangeFrom);
+            const toDate = new Date(rangeTo);
+            toDate.setDate(toDate.getDate() + 1);
+
+            query.ordered_date = { $gte: fromDate, $lte: toDate };
+
+        if (status) {
+            query.status = status;
+        }
+
+        // Fetch orders that match the query
+        const orders = await Order.find(query).sort({ ordered_date: -1 });
+
+        if (orders.length === 0) {
+            return res.status(404).json({ message: 'No orders found' });
+        }
+
+        // Fetch product information for each order
+        const orderDetailsWithProducts = await Promise.all(
+            orders.map(async (order) => {
+                const productDetails = order.products; // Get product details from order
+
+                if (Array.isArray(productDetails) && productDetails.length > 0) {
+                    const productIds = productDetails.map((detail) => detail.product_id);
+
+                    // Fetch products based on product_id
+                    const fetchedProducts = await Product.find({ id: { $in: productIds } });
+
+                    // Map the fetched products to their details and merge with order
+                    const products = fetchedProducts.map((product) => {
+                        const detail = productDetails.find(
+                            (d) => d.product_id.toString() === product.id.toString()
+                        );
+                        return {
+                            ...product.toObject(),
+                            price: order.currency === 'INR' ? product.inrprice : product.usdprice,
+                            quantity: detail ? detail.quantity : 0,
+                        };
+                    });
+
+                    return {
+                        ...order.toObject(),
+                        products,
+                    };
+                } else {
+                    return {
+                        ...order.toObject(),
+                        products: [], // No products
+                    };
+                }
+            })
+        );
+
+        res.status(200).json({ orders: orderDetailsWithProducts });
+    } catch (error) {
+        logger.error('An error occurred:', { message: error.message, stack: error.stack });
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+};
+
 
 module.exports = {
     manage_get_all_orders,
@@ -428,6 +512,7 @@ module.exports = {
     get_all_order,
     upsertOrder,
     get_orders_by_filter_for_invoice,
+    get_orders_export_list,
     search_all_product,
     get_order_by_search
 };

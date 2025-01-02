@@ -104,7 +104,7 @@ const generateForgotPasswordTemplate = (resetLink, date) => `
                   />
                 </a>
               </div>
-              <p style="margin: 0; margin-top: 16px; color: #434343;">Copyright © 2021, Wallfleur.</p>
+              <p style="margin: 0; margin-top: 16px; color: #434343;">Copyright © ${new Date().getFullYear()}, Wallfleur.</p>
             </td>
           </tr>
         </table>
