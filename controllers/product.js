@@ -13,6 +13,27 @@ const get_all_product = async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
+const get_all_product_website = async (req, res) => {
+    try {
+        const isInternational = req.query.isInternational === 'true'; 
+        const result = await Products.find({ show_on_website: 1 });
+
+        const updatedResult = await Promise.all(
+            result.map(async (prod) => {
+                return {
+                    ...prod.toObject(),
+                    price: isInternational ? prod.usdprice : prod.inrprice
+                };
+            })
+        );
+
+        res.status(200).json(updatedResult);
+    } catch (e) {
+        logger.error('An error occurred:', { message: e.message, stack: e.stack });
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+};
+
 
 const manage_get_all_product = async (req, res) => {
     const token = req.headers.authorization;
@@ -426,6 +447,7 @@ const restore_quantity = async (req, res) => {
 module.exports = {
     get_product,
     get_all_product,
+    get_all_product_website,
     manage_get_all_product,
     get_alternate_product,
     add_product,
