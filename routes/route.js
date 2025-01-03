@@ -12,6 +12,8 @@ const payment = require('../controllers/payment.js');
 const admin = require('../controllers/adminuser');
 const order = require('../controllers/order');
 const advertisement = require('../controllers/advertisement');
+const newsletter = require('../controllers/newsletter');
+const contactus = require('../controllers/contactus');
 
 const storage = multer.memoryStorage(); 
 const upload = multer({ storage: storage });
@@ -96,6 +98,9 @@ router.get('/search-product', product.get_products_by_search)
 router.get('/search-category', category.get_category_by_search)
 router.get('/search-customer', customer.get_customer_by_search)
 router.get('/search-order', order.get_order_by_search)
+
+router.get('/manage-newsletter', newsletter.manage_get_all_newsletter)
+router.get('/manage-contactus', contactus.manage_get_all_contactus)
 
 
 module.exports = router
