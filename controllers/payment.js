@@ -3,13 +3,13 @@ const Order = require('../models/payment.model');
 const Bag = require('../models/bag.model');
 const Customer = require('../models/customer.model');
 const Product = require('../models/product.model');
-const {transporter} = require('../config/email');
-const { generateOrderConfirmationEmailTemplate } = require('../utils/emailTemplates/orderEmailTemplate');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const logger = require('../config/logger');
+const {transporter} = require('../config/email');
+const { generateOrderConfirmationEmailTemplate } = require('../utils/emailTemplates/orderEmailTemplate');
 
 const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
@@ -306,7 +306,6 @@ const createPayPalOrder = async (req, res) => {
 
         const accessToken = await generateAccessToken();
 
-        // Make the API call to PayPal only at this point
         const response = await axios({
             url: `${process.env.PAYPAL_BASE_URL}/v2/checkout/orders`,
             method: 'post',
@@ -345,7 +344,6 @@ const createPayPalOrder = async (req, res) => {
             }
         });
 
-        // Generate invoice ID after receiving response
         const orderCount = await Order.countDocuments({ customer_id: customerId });
         const invoiceId = `INV_${customerId}-${orderCount + 1}-${Date.now().toString().slice(-4)}`;
 
@@ -374,10 +372,9 @@ const createPayPalOrder = async (req, res) => {
 
         await newOrder.save();
 
-        const approvalUrl = response.data.links.find(link => link.rel === 'approve').href;
         const orderId = response.data.id;
 
-        res.status(201).json({ approvalUrl: `${approvalUrl}&order_id=${orderId}` });
+        res.status(201).json({ orderId });
     } catch (error) {
         logger.error('An error occurred:', { message: error.message, stack: error.stack });
         res.status(500).json({ message: 'Internal Server Error' });
@@ -399,14 +396,14 @@ const capturePayPalPayment = async (req, res) => {
         const decodedToken = jwt.verify(jwtToken, process.env.SECRET_KEY);
         const customerId = decodedToken.userId;
 
-        const { order_id } = req.body;
+        const { orderId } = req.body;
 
-        if (!order_id) {
+        if (!orderId) {
             return res.status(400).json({ message: 'Order ID is missing in request body.' });
         }
 
 
-        const order = await Order.findOne({ order_id, customer_id: customerId });
+        const order = await Order.findOne({ order_id:orderId, customer_id: customerId });
         const user = await Customer.findOne({
             id: customerId,
             status: 1,
@@ -438,7 +435,7 @@ const capturePayPalPayment = async (req, res) => {
         }
 
         const accessToken = await generateAccessToken();
-        const url = `${process.env.PAYPAL_BASE_URL}/v2/checkout/orders/${order_id}/capture`;
+        const url = `${process.env.PAYPAL_BASE_URL}/v2/checkout/orders/${orderId}/capture`;
 
         const response = await axios.post(url, {}, {
             headers: {
@@ -477,7 +474,7 @@ const capturePayPalPayment = async (req, res) => {
             });
 
 
-            res.status(200).json({ status: 'success' });
+            res.status(200).json({ status: 'COMPLETED' });
         } else {
             order.status = 'failed';
             order.updated_date = new Date();

@@ -338,8 +338,6 @@ const add_product_image = async (req, res) => {
             }
           }
 
-        console.log(imageUrls);
-
         const updateData = { updated_date: new Date() };
         Object.assign(updateData, imageUrls);
 
