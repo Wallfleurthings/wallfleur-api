@@ -294,7 +294,6 @@ const add_product_image = async (req, res) => {
         const { product_id } = req.body;
         const images = req.files;
 
-        console.log(req.files);
         if (!product_id) {
         return res.status(400).json({ message: 'Product ID is required' });
         }
@@ -306,19 +305,6 @@ const add_product_image = async (req, res) => {
         const imageFields = ['image1', 'image2', 'image3', 'image4', 'image5', 'image6'];
         const imageUrls = {};
 
-        // for (let i = 0; i < images.length; i++) {
-        // const file = images[i];
-        // const imageName = `${file.originalname}`;
-        
-        // try {
-        //     await uploadImageToS3(file, imageName, 'products');
-            
-        //     imageUrls[imageFields[i]] = imageName;
-        // } catch (error) {
-        //     logger.error('An error occurred:', { message: error.message, stack: error.stack });
-        //     return res.status(500).json({ message: 'Error uploading images' });
-        //     }
-        // }
         for (const fieldName of imageFields) {
             const file = req.files[fieldName];  // Get the image for this specific field
       
