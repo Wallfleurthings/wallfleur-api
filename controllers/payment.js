@@ -75,7 +75,7 @@ const createOrder = async (req, res) => {
         const calculatedAmountInCents = Math.round(totalAmountWithDelivery * 100);
 
         if (amountInCents !== calculatedAmountInCents) {
-            return res.status(400).json({ message: 'Amount mismatch' });
+            return res.status(200).json({ message: 'Amount mismatch' });
         }
 
         const options = {
@@ -292,7 +292,7 @@ const createPayPalOrder = async (req, res) => {
         const calculatedAmountInCents = Math.round(totalAmountWithDelivery * 100);
 
         if (Math.round(amount * 100) !== calculatedAmountInCents) {
-            return res.status(400).json({ message: 'Amount mismatch' });
+            return res.status(200).json({ message: 'Amount mismatch' });
         }
 
         const items = products.map(product => ({
