@@ -52,26 +52,18 @@ const register_customer = async (req, res) => {
     try {
         const { name, phoneNumber, email, password,dialCode } = req.body;
 
-        const existingCustomer = await Customer.findOne({ $or: [{ phone: phoneNumber }, { email: email }] });
+        const existingCustomer = await Customer.findOne({ $and: [ { email: email },{is_verified:1}] });
         if (existingCustomer) {
             return res.status(400).json({ message: 'Phone number or email already registered' });
         }
 
+        const unverifiedCustomer = await Customer.findOne({ $and: [ { email: email },{is_verified:0}] });
+        if (unverifiedCustomer && unverifiedCustomer.otp_expiry >  Date.now() + 10 * 60 * 1000) {
+            return res.status(201).json({ message: 'Please check your email, an OTP has already been send.' });
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
         const otp = Math.floor(100000 + Math.random() * 900000);
-
-        const newCustomer = new Customer({
-            name: name,
-            phone: phoneNumber,
-            password: hashedPassword,
-            email: email,
-            otp: otp,
-            dialcode: dialCode,
-            otp_expiry: Date.now() + 10 * 60 * 1000,
-            status: 0,
-            is_verified: 0
-        });
-
 
         const emailDate = new Date().toLocaleDateString();
         const emailTemplate = generateOTPEmailTemplate(otp, emailDate);
@@ -91,7 +83,36 @@ const register_customer = async (req, res) => {
             }
             res.status(201).json({ message: 'Please check your email to verify your account.' });
         });
-        await newCustomer.save();
+        if(unverifiedCustomer){
+            await Customer.findOneAndUpdate(
+                { email: email },
+                {
+                    name: name,
+                    phone: phoneNumber,
+                    password: hashedPassword,
+                    otp: otp,
+                    dialcode: dialCode,
+                    otp_expiry: Date.now() + 10 * 60 * 1000,
+                    status: 0,
+                    is_verified: 0
+                },
+                { new: true }
+            );
+
+        }else{
+            const newCustomer = new Customer({
+                name: name,
+                phone: phoneNumber,
+                password: hashedPassword,
+                email: email,
+                otp: otp,
+                dialcode: dialCode,
+                otp_expiry: Date.now() + 10 * 60 * 1000,
+                status: 0,
+                is_verified: 0
+            });
+            await newCustomer.save();
+        }
 
         res.status(201).json({ message: 'Please check your email to verify your account.' });
 
