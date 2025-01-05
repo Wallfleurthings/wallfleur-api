@@ -1,6 +1,8 @@
 const Newsletter = require('../models/newsletter.model');
 const jwt = require('jsonwebtoken');
 const logger = require('../config/logger');
+const {transporter} = require('../config/email');
+const { generateNewLetterEmailTemplate } = require('../utils/emailTemplates/sendNewsLetter');
 
 const manage_get_all_newsletter = async (req, res) => {
     const token = req.headers.authorization;
@@ -30,7 +32,64 @@ const manage_get_all_newsletter = async (req, res) => {
     }
 };
 
+const sendEmail = async (email) => {
+    try {
+        const emailDate = new Date().toLocaleDateString();
+        const emailTemplate = generateNewLetterEmailTemplate(emailDate);
+        const mailOptions = {
+            from: process.env.GMAIL_USER,
+            to: email,
+            subject: 'WallfleurThings Newsletter',
+            html: emailTemplate
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                logger.error('An error occurred:', { message: error.message, stack: error.stack });
+            }else{
+                console.log(`Email sent to: ${email}`);
+                return true;
+            }
+        });
+
+
+    } catch (error) {
+        console.error(`Failed to send email to ${email}:`, error);
+        return false;
+    }
+};
+
+
+const send_newsletter = async(req,res) =>{
+    try {
+        const newsletters = await Newsletter.find({ send_status: { $ne: 1 } }).limit(10);
+
+        if (newsletters.length === 0) {
+            return res.status(200).json({ message: 'No emails to send.' });
+        }
+
+        const results = await Promise.all(
+            newsletters.map(async (newsletter) => {
+                const emailSent = await sendEmail(newsletter.email);
+                if (emailSent) {
+                    newsletter.send_status = 1;
+                    await newsletter.save();
+                }
+                return { email: newsletter.email, success: emailSent };
+            })
+        );
+
+        res.status(200).json({message: 'Emails processed.'});
+    } catch (error) {
+        console.error('Error in /send-newsletters:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+}
+
+
+
 
 module.exports = {
     manage_get_all_newsletter,
+    send_newsletter
 };

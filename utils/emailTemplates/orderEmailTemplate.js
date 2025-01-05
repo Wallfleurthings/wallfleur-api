@@ -52,9 +52,15 @@ const generateOrderConfirmationEmailTemplate = (userData, order, products) => {
                           font-weight: 500;
                           letter-spacing: 0.56px;
                         "
-                      >
-                        Thank you for your order! Your order ID is <strong>${order.order_id}</strong> and Payment ID is <strong>${order.payment_id}</strong>.
-                      </p>
+                      >Thank you for your order! We are excited to confirm that we’ve successfully received your order.</p>
+                      <p
+                        style="
+                          margin: 0;
+                          margin-top: 17px;
+                          font-weight: 500;
+                          letter-spacing: 0.56px;
+                        "
+                      >Your order ID is <strong>${order.order_id}</strong> and Payment ID is <strong>${order.payment_id}</strong></p>
                       <p
                         style="
                           margin: 0;
@@ -63,7 +69,17 @@ const generateOrderConfirmationEmailTemplate = (userData, order, products) => {
                           letter-spacing: 0.56px;
                         "
                       >
-                        We will update your order status after confirming your payment.
+                        We’ll start processing your order and notify you once your order has been shipped.
+                      </p>
+                       <p
+                        style="
+                          margin: 0;
+                          margin-top: 17px;
+                          font-weight: 500;
+                          letter-spacing: 0.56px;
+                        "
+                      >
+                        Thank you once again for choosing handmade and for supporting our work!
                       </p>
                       <p
                         style="

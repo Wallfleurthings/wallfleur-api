@@ -11,27 +11,27 @@ const generateOrderStatusEmailTemplate = (userData, order, products) => {
             paymentConfirmationText = 'We are processing your order and will update you soon.';
             break;
         case 'created':
-            statusText = `Your order ID is <strong>${order.order_id}</strong>. Your payment is pending.`;
+            statusText = `Your order ID <strong>${order.order_id}</strong> payment is pending.`;
             paymentConfirmationText = 'Please complete the payment to confirm your order.';
             break;
         case 'paid':
-            statusText = `Your order ID is <strong>${order.order_id}</strong>. Your payment has been received.`;
-            paymentConfirmationText = 'We are preparing your order for dispatch.';
+            statusText = `Your order ID  <strong>${order.order_id}</strong> payment has been verified.`;
+            paymentConfirmationText = 'We will notify you once your order is ready for shipment..';
             break;
         case 'crafting':
             statusText = `Your order ID is <strong>${order.order_id}</strong>. Your order is being crafted.`;
             paymentConfirmationText = 'We will notify you once your order is ready for shipment.';
             break;
         case 'Shipped':
-            statusText = `Your order ID is <strong>${order.order_id}</strong>. Your order has been shipped.`;
-            paymentConfirmationText = `You can track your shipment using the tracking ID:<strong>${order.trackingId}</strong>.`;
+            statusText = `We are happy to inform you that your order ID <strong>${order.order_id}</strong> has been dispatched and is on its way to you.`;
+            paymentConfirmationText = `Here’s your tracking number :<strong>${order.trackingId}</strong>.To track your package, please visit: www.wallfleurthings.com`;
             break;
         case 'Delivered':
-            statusText = `Your order ID is <strong>${order.order_id}</strong>. Your order has been delivered.`;
-            paymentConfirmationText = 'Thank you for shopping with us. We hope you are satisfied with your purchase.';
+            statusText = `Your order ID <strong>${order.order_id}</strong> has been successfully delivered.`;
+            paymentConfirmationText = 'We hope you are happy with your purchase. Thank you for supporting our small business!';
             break;
         case 'Delayed':
-            statusText = `Your order ID is <strong>${order.order_id}</strong>. Your order has been delayed.`;
+            statusText = `We are sorry to inform you that your order ID <strong>${order.order_id}</strong> has been delayed.`;
             paymentConfirmationText = 'We are working to resolve the issue and will update you with new information soon.';
             break;
         default:
