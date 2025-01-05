@@ -100,7 +100,9 @@ router.get('/search-customer', customer.get_customer_by_search)
 router.get('/search-order', order.get_order_by_search)
 
 router.get('/manage-newsletter', newsletter.manage_get_all_newsletter)
+router.get('/send-newsletter', newsletter.send_newsletter)
 router.get('/manage-contactus', contactus.manage_get_all_contactus)
+router.post('/support-reply', contactus.reply_support)
 
 
 module.exports = router

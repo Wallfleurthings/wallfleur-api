@@ -144,7 +144,7 @@ const removefrombag = (req, res) => {
                 }
             })
             .catch((err) => {
-                console.error("Error removing product from bag:", err);
+                logger.error('An error occurred:', { message: err.message, stack: err.stack });
                 res.status(500).json({ message: 'Internal Server Error' });
             });
     } catch (err) {
