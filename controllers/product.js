@@ -15,7 +15,7 @@ const get_all_product = async (req, res) => {
 };
 const get_all_product_website = async (req, res) => {
     try {
-        const isInternational = req.query.isInternational === 'true'; 
+        const isInternational = req.session.is_international || false; 
         const result = await Products.find({ show_on_website: 1 });
 
         const updatedResult = await Promise.all(
