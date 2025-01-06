@@ -28,7 +28,9 @@ const get_all_product_website = async (req, res) => {
             })
         );
 
-        res.status(200).json(updatedResult);
+        const currency = isInternational ? 'Global' : 'India';
+
+        res.status(200).json({updatedResult ,currency});
     } catch (e) {
         logger.error('An error occurred:', { message: e.message, stack: e.stack });
         res.status(500).json({ message: 'Internal Server Error' });

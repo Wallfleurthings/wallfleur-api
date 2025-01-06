@@ -132,6 +132,8 @@ const get_category_product = async (req, res) => {
             price: isInternational ? prod.usdprice : prod.inrprice,
             currency: isInternational ? '$' : '₹'
         }));
+
+        result['currency'] = isInternational ? 'Global' : 'India';
         res.status(200).json(result);
     } catch (error) {
         logger.error('An error occurred:', { message: error.message, stack: error.stack });
