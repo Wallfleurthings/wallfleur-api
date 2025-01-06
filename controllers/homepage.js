@@ -15,13 +15,17 @@ const get_homedata = async (req, res) => {
 
         result['product'] = products.map(product => ({
             ...product.toObject(), 
-            price: isInternational ? product.usdprice : product.inrprice
+            price: isInternational ? product.usdprice : product.inrprice,
+            currency: isInternational ? '$' : '₹'
         }));
 
         result['PreOrderproducts'] = PreOrderproducts.map(PreOrderproduct => ({
             ...PreOrderproduct.toObject(), 
-            price: isInternational ? PreOrderproduct.usdprice : PreOrderproduct.inrprice
+            price: isInternational ? PreOrderproduct.usdprice : PreOrderproduct.inrprice,
+            currency: isInternational ? '$' : '₹'
         }));
+
+        result['currency'] = isInternational ? 'Global' : 'India';
 
         res.status(200).json(result);
     } catch (e) {

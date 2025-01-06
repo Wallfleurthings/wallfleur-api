@@ -129,7 +129,8 @@ const get_category_product = async (req, res) => {
         const isInternational = req.session.is_international || false; 
         result['product'] = product.map(prod => ({
             ...prod.toObject(), 
-            price: isInternational ? prod.usdprice : prod.inrprice
+            price: isInternational ? prod.usdprice : prod.inrprice,
+            currency: isInternational ? '$' : '₹'
         }));
         res.status(200).json(result);
     } catch (error) {

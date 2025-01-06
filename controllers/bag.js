@@ -39,6 +39,7 @@ const check_bag = async (req, res) => {
         products = products.map(prod => ({
             ...prod.toObject(),
             price: isInternational ? prod.usdprice : prod.inrprice,
+            currency: isInternational ? '$' : '₹',
             quantity: productQuantities[prod.id] || 1 
         }));
 
@@ -232,12 +233,14 @@ const check_products = async (req, res) => {
 
             // Get the appropriate price based on international status
             const price = isInternational == true ? product.usdprice : product.inrprice;
+            const currency = isInternational == true ? '$' : '₹';
 
             // Push result with price and availability message
             results.push({
                 productId,
                 name: product.name,
-                price, 
+                price,
+                currency,
                 message
             });
         }

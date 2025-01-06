@@ -22,7 +22,8 @@ const get_all_product_website = async (req, res) => {
             result.map(async (prod) => {
                 return {
                     ...prod.toObject(),
-                    price: isInternational ? prod.usdprice : prod.inrprice
+                    price: isInternational ? prod.usdprice : prod.inrprice,
+                    currency: isInternational ? '$' : '₹'
                 };
             })
         );
@@ -82,6 +83,7 @@ const get_product = async (req, res) => {
         product = product.map(prod => ({
             ...prod.toObject(), 
             price: isInternational ? prod.usdprice : prod.inrprice,
+            currency: isInternational ? '$' : '₹',
             category_name : categoryName,
             category_slug : categoryslug
         }));
@@ -180,7 +182,8 @@ const get_alternate_product = async (req, res) => {
 
         alternateProducts = alternateProducts.map(prod => ({
             ...prod.toObject(), 
-            price: isInternational ? prod.usdprice : prod.inrprice
+            price: isInternational ? prod.usdprice : prod.inrprice,
+            currency: isInternational ? '$' : '₹'
         }));
         
         
