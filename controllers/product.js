@@ -275,7 +275,7 @@ const add_product = async (req, res) => {
 
             await newProduct.save();
 
-            res.status(200).json({ message: 'Product added successfully', product_id: newProduct.id  });
+            res.status(200).json({ message: 'Product added successfully', product: newProduct  });
         }
     } catch (e) {
         logger.error('An error occurred:', { message: e.message, stack: e.stack });
