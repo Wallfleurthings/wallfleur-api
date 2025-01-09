@@ -11,7 +11,7 @@ const customerSchema = new mongoose.Schema({
     country: { type: String },
     state: { type: String },
     city: { type: String },
-    pinCode: { type: Number },
+    pinCode: { type: String },
     status: { type: Number, default: 0 },
     address_1: { type: String },
     address_2: { type: String },
