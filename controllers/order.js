@@ -23,9 +23,9 @@ const manage_get_all_orders = async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
-        const { dialcode } = req.query;
+        const { currency } = req.query;
 
-        const filter = dialcode ? { dialcode } : {};
+        const filter = currency ? { currency } : {};
 
         const [orders, totalOrders] = await Promise.all([
             Order.find(filter).sort({ ordered_date: -1 }).skip(skip).limit(limit),
