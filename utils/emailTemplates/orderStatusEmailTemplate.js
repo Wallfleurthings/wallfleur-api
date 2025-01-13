@@ -83,7 +83,7 @@ const generateOrderStatusEmailTemplate = (userData, order, products) => {
                 <tr>
                   <td>
                     <h1 style="text-align: center; margin: 0; font-size: 24px; font-weight: 500; color: #1f1f1f;">Order Status Updated</h1>
-                    <p style="margin-top: 17px; font-size: 16px; font-weight: 500;">Dear ${userData.name},</p>
+                    <p style="margin-top: 17px; font-size: 16px; font-weight: 500;">Dear ${order.customer_name},</p>
                     <p
                       style="
                         margin: 0;

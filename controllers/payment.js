@@ -38,6 +38,12 @@ const createOrder = async (req, res) => {
             return res.status(400).json({ message: 'Amount is missing in request body.' });
         }
 
+        const CustomerData = await Customer.findOne({
+            id: customerId,
+            status: 1,
+            is_verified: 1
+        });
+
         const amountInCents = Math.round(amount * 100);
 
         const productIds = products.map(product => product.id);
@@ -92,6 +98,7 @@ const createOrder = async (req, res) => {
         const newOrder = new Order({
             customer_id: customerId,
             customer_name: userData.name,
+            email: CustomerData.email,
             mobile: userData.mobile,
             dialcode: userData.dialcode,
             address: userData.address,
@@ -258,6 +265,12 @@ const createPayPalOrder = async (req, res) => {
             return res.status(400).json({ message: 'Amount is missing in request body.' });
         }
 
+        const CustomerData = await Customer.findOne({
+            id: customerId,
+            status: 1,
+            is_verified: 1
+        });
+
         const productIds = products.map(product => product.id);
         const productDetails = await Product.find({ id: { $in: productIds } }).select(`id name quantity usdprice`);
 
@@ -350,6 +363,7 @@ const createPayPalOrder = async (req, res) => {
         const newOrder = new Order({
             customer_id: customerId,
             customer_name: userData.name,
+            email: CustomerData.email,
             mobile: userData.mobile,
             dialcode: userData.dialcode,
             address: userData.address,

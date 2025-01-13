@@ -218,6 +218,7 @@ const upsertOrder = async (req, res) => {
             const newOrder = new Order({
                 customer_id: 0,
                 customer_name: customerDetails.name,
+                email: customerDetails.email,
                 mobile: customerDetails.phoneNo,
                 address: customerDetails.address,
                 city: customerDetails.city,
@@ -249,6 +250,7 @@ const upsertOrder = async (req, res) => {
 
             const oldStatus = order.status;
             order.customer_name = customerDetails.name || order.customer_name;
+            order.email = customerDetails.email || order.email;
             order.address = customerDetails.address || order.address;
             order.mobile = customerDetails.phoneNo || order.mobile;
             order.dialcode = customerDetails.dialcode || order.dialcode;
@@ -256,7 +258,6 @@ const upsertOrder = async (req, res) => {
             order.state = customerDetails.state || order.state;
             order.city = customerDetails.city || order.city;
             order.postalCode = customerDetails.pincode || order.postalCode;
-            order.paymentMode = customerDetails.paymentMode || order.paymentMode;
             order.status = customerDetails.status || order.status;
             order.currency = currency || order.currency;
             order.trackingId = customerDetails.trackingId;
@@ -283,7 +284,7 @@ const upsertOrder = async (req, res) => {
 
                 const mailOptions = {
                     from: process.env.GMAIL_USER,
-                    to: user.email, 
+                    to: customerDetails.email ?? user.email, 
                     subject: 'Wallfleur Order Status Updated',
                     html: emailTemplate
                 };
