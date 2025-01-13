@@ -60,6 +60,7 @@ const get_order_by_search = async (req, res) => {
                 {
                     $or: [
                         { customer_name: { $regex: search, $options: 'i' } },
+                        { email: { $regex: search, $options: 'i' } },
                         { order_id: { $regex: search, $options: 'i' } }
                     ]
                 },
