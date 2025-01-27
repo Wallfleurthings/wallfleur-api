@@ -121,7 +121,7 @@ const get_category_product = async (req, res) => {
                 { sub_category_id: id }
             ],
             show_on_website: 1
-        });
+        }).select('id name image1 inrprice usdprice slug quantity coming_soon preorder');
 
         if (!product) {
             return res.status(404).json({ message: 'No Products' });

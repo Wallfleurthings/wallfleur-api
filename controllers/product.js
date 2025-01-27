@@ -180,7 +180,7 @@ const get_alternate_product = async (req, res) => {
             category_id: category_id,
             id: { $ne: prod_id },
             show_on_website: 1
-        });
+        }).select('image1 quantity slug name preorder inrprice usdprice coming_soon');
 
         alternateProducts = alternateProducts.map(prod => ({
             ...prod.toObject(), 
@@ -215,7 +215,7 @@ const add_product = async (req, res) => {
     try {
         jwt.verify(jwtToken, process.env.MANAGE_SECRET_KEY);
 
-        let { id, name, slug, note, description, quantity, maxquantity, inrprice, usdprice, category_id, sub_category_id, show_on_website, show_on_homepage,preorder } = req.body;
+        let { id, name, slug, note, description, quantity, maxquantity, inrprice, usdprice, category_id, sub_category_id, show_on_website, show_on_homepage,preorder, coming_soon } = req.body;
         id = id || ''; 
         name = name || '';
         slug = slug || '';
@@ -230,6 +230,7 @@ const add_product = async (req, res) => {
         show_on_website = show_on_website || 0;
         show_on_homepage = show_on_homepage || 0;
         preorder = preorder || 0;
+        coming_soon = coming_soon || 0;
 
         if (id) {
             const updatedProduct = await Products.findOneAndUpdate({ id: id }, {
@@ -245,6 +246,7 @@ const add_product = async (req, res) => {
                 sub_category_id,
                 show_on_website,
                 show_on_homepage,
+                coming_soon,
                 preorder,
                 $set: { updated_date: new Date() } 
             }, { new: true });
@@ -269,6 +271,7 @@ const add_product = async (req, res) => {
                 show_on_website,
                 show_on_homepage,
                 preorder,
+                coming_soon,
                 added_date: new Date(),
                 updated_date:  new Date()
             });

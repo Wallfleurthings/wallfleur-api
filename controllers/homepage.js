@@ -6,10 +6,10 @@ const logger = require('../config/logger');
 const get_homedata = async (req, res) => {
     try {
         const result = {};
-        result['category'] = await Category.find({status:1,show_on_homepage:1});
-        result['advertisement'] = await Advertisement.find({status:1});
-        const products = await Product.find({show_on_website: 1, show_on_homepage: 1 });
-        const PreOrderproducts = await Product.find({show_on_website: 1, preorder: 1 });
+        result['category'] = await Category.find({status: 1, show_on_homepage: 1}).select('image slug name');
+        result['advertisement'] = await Advertisement.find({status:1}).select('banner_image banner_url');
+        const products = await Product.find({show_on_website: 1, show_on_homepage: 1 }).select('image1 quantity slug name preorder inrprice usdprice coming_soon');
+        const PreOrderproducts = await Product.find({show_on_website: 1, preorder: 1 }).select('image1 quantity slug name preorder inrprice usdprice coming_soon');
 
         const isInternational = req.session.is_international || false; 
 

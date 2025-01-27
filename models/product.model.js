@@ -21,6 +21,7 @@ const productSchema = new mongoose.Schema({
     maxquantity: { type: Number, required: true },
     show_on_website: { type: Number, required: true },
     show_on_homepage: { type: Number, required: true },
+    coming_soon: { type: Number, required: true },
     preorder: { type: Number, required: true },
     added_date: { type: Date, default: Date.now },
     updated_date: { type: Date, default: Date.now }

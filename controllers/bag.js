@@ -30,7 +30,7 @@ const check_bag = async (req, res) => {
 
         // Fetch products based on product IDs in the bag
         const productIds = bagItems.map(item => item.product_id);
-        let products = await Product.find({ id: { $in: productIds } });
+        let products = await Product.find({ id: { $in: productIds } }).select('id image1 quantity slug name inrprice usdprice');
         
         // Determine if the user is international
         const isInternational = req.session.is_international || false; 
@@ -254,6 +254,26 @@ const check_products = async (req, res) => {
     }
 };
 
+const extendholdtime = async (req, res) => {
+    const { userId } = req.body;
+
+    try {
+      const cart = await Cart.findOne({ userId });
+      if (cart) {
+        cart.products.forEach(product => {
+          product.addedAt = new Date();
+        });
+        await cart.save();
+        res.status(200).json({ message: 'Hold time extended' });
+      } else {
+        res.status(404).json({ message: 'Cart not found' });
+      }
+    } catch (error) {
+      console.error('Error extending hold time:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  };
+
 
 
 module.exports = {
@@ -261,5 +281,6 @@ module.exports = {
     addtobag,
     removefrombag,
     check_products,
-    cartCount
+    cartCount,
+    extendholdtime
 };
